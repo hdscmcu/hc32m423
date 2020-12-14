@@ -120,7 +120,7 @@ static en_result_t XtalInit(void)
  */
 static void XTAL_STOP_IrqCallback(void)
 {
-    uint8_t u8Cnt = 10U;
+    __IO uint8_t u8Cnt = 10U;
     BSP_LED_Off(LED_GREEN);
     do
     {

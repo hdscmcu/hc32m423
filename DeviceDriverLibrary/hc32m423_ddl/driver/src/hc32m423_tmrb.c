@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-27       CDT             Fix bug for TMRB_ReloadCmd function.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -228,7 +229,7 @@
  * @brief Get the specified BCONR register address of the specified TMRB unit
  * @{
  */
-#define TMRB_BCONRx(_UNITx_, _CH_)  ((__IO uint16_t *)((uint32_t)(&((_UNITx_)->BCONR1)) + (((_CH_) % 2UL) << 2UL)))
+#define TMRB_BCONRx(_UNITx_, _CH_)  ((__IO uint16_t *)((uint32_t)(&((_UNITx_)->BCONR1)) + (((_CH_) / 2UL) << 3UL)))
 /**
  * @}
  */
@@ -274,15 +275,6 @@
 /*******************************************************************************
  * Local function prototypes ('static')
  ******************************************************************************/
-
-/**
- * @addtogroup TMRB_Local_Functions
- * @{
- */
-static __IO uint32_t* TMRB_HTSSR(const CM_TMRB_TypeDef *DCUx);
-/**
- * @}
- */
 
 /*******************************************************************************
  * Local variable definitions ('static')
@@ -857,31 +849,11 @@ void TMRB_ReloadCmd(CM_TMRB_TypeDef *TMRBx,
 
     if (Enable == enNewState)
     {
-        SET_REG16_BIT(TMRBx->BCSTR, TMRB_BCSTR_OVSTP);
+        CLEAR_REG16_BIT(TMRBx->BCSTR, TMRB_BCSTR_OVSTP);
     }
     else
     {
-        CLEAR_REG16_BIT(TMRBx->BCSTR, TMRB_BCSTR_OVSTP);
-    }
-}
-
-/**
- * @brief  Set the specified event trigger source for TMRB.
- * @param  [in] TMRBx               Pointer to TMRB instance register base
- *         This parameter can be one of the following values:
- *           @arg CM_TMRB:          TMRB unit instance register base
- * @param  [in] enEventSrc          The trigger external event source source.
- *           @arg This parameter can be any value of @ref en_event_src_t
- * @retval None
- */
-void TMRB_SetTriggerSrc(const CM_TMRB_TypeDef *TMRBx,
-                        en_event_src_t enEventSrc)
-{
-    __IO uint32_t *const HTSSRx = TMRB_HTSSR(TMRBx);
-
-    if (NULL != HTSSRx)
-    {
-        WRITE_REG32(*HTSSRx, ((uint32_t)enEventSrc) & 0x1FFUL);
+        SET_REG16_BIT(TMRBx->BCSTR, TMRB_BCSTR_OVSTP);
     }
 }
 
@@ -1258,6 +1230,17 @@ void TMRB_CompareBufCmd(CM_TMRB_TypeDef *TMRBx,
 }
 
 /**
+ * @brief  Set the specified event trigger source for TMRB.
+ * @param  [in] enEventSrc          The trigger external event source source.
+ *           @arg This parameter can be any value of @ref en_event_src_t
+ * @retval None
+ */
+void TMRB_SetTriggerSrc(en_event_src_t enEventSrc)
+{
+    WRITE_REG32(CM_AOS->TMRB_HTSSR, ((uint32_t)enEventSrc) & 0x1FFUL);
+}
+
+/**
  * @defgroup TMRB_PWM_Global_Functions TMRB PWM Global Functions
  * @{
  */
@@ -1385,7 +1368,7 @@ void TMRB_PWM_DeInit(CM_TMRB_TypeDef *TMRBx, uint32_t u32Ch)
     }
 
     WRITE_REG16(*TMRB_CMPAR, 0xFFFFU);
-    WRITE_REG16(TMRBx->STFLR, (1UL << u32Ch));
+    CLEAR_REG16_BIT(TMRBx->STFLR, (1UL << u32Ch));
 }
 
 /**
@@ -1506,37 +1489,6 @@ void TMRB_PWM_SetForcePolarity(CM_TMRB_TypeDef *TMRBx,
 /**
  * @}
  */
-
-/**
- * @}
- */
-
-/**
- * @defgroup TMRB_Local_Functions TMRB Local Functions
- * @{
- */
-
-/**
- * @brief Get TMRB trigger selection register of the specified TMRB unit.
- * @param  [in] TMRBx               Pointer to TMRB instance register base
- *         This parameter can be one of the following values:
- *           @arg CM_TMRB:          TMRB unit instance register base
- * @retval TMRB trigger selection register
- */
-static __IO uint32_t* TMRB_HTSSR(const CM_TMRB_TypeDef *TMRBx)
-{
-    __IO uint32_t *HTSSRx = NULL;
-
-    /* Check parameters */
-    DDL_ASSERT(IS_TMRB_UNIT(TMRBx));
-
-    if (CM_TMRB == TMRBx)
-    {
-        HTSSRx = &CM_AOS->TMRB_HTSSR;
-    }
-
-    return HTSSRx;
-}
 
 /**
  * @}

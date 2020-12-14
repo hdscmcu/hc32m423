@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Corrected comments of SPI unit.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -269,7 +270,7 @@ typedef struct
  * @brief  Read SPI data register.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @retval A 32-bit data of SPI data register.
  */
 __STATIC_INLINE uint32_t SPI_ReadData(const CM_SPI_TypeDef *SPIx)
@@ -282,7 +283,7 @@ __STATIC_INLINE uint32_t SPI_ReadData(const CM_SPI_TypeDef *SPIx)
  * @brief  Write SPI data register.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32Data                The data will be written to the data register.
  * @retval None.
  */

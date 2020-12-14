@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -43,17 +44,16 @@
 #define I2C_UNIT                        (CM_I2C)
 
 #define DEVICE_ADDR                     (0x06U)
+//#define I2C_10BITS_ADDRESS              (1U)
 /* Define port and pin for SDA and SCL */
 #define I2C_SCL_PORT                    (GPIO_PORT_7)
 #define I2C_SCL_PIN                     (GPIO_PIN_5)
 #define I2C_SDA_PORT                    (GPIO_PORT_7)
 #define I2C_SDA_PIN                     (GPIO_PIN_6)
-
-#define ADDRESS_W                       (0x00U)
-#define ADDRESS_R                       (0x01U)
+#define I2C_GPIO_FUNC                   (GPIO_FUNC_7_I2C)
 
 /* Define Write and read data length for the example */
-#define TEST_DATA_LEN                   (128U)
+#define TEST_DATA_LEN                   (256U)
 /* Define i2c baudrate */
 #define I2C_BAUDRATE                    (400000UL)
 
@@ -110,65 +110,95 @@ static void WaitKeyShortPress(void)
 }
 
 /**
- * @brief  Send Start condition.
- * @param  None
- * @retval en_result_t              Enumeration value:
+ * @brief  Master transmit data
+ *
+ * @param  u16DevAddr            The slave address
+ * @param  au8Data               The data array
+ * @param  u32Size               Data size
+ * @param  u32Timeout            Time out count
+ * @retval en_result_t           Enumeration value:
  *         @arg Ok:                 Success
  *         @arg ErrorTimeout:       Time out
  */
-static en_result_t Master_Start(void)
+static en_result_t I2C_Master_Transmit(uint16_t u16DevAddr, uint8_t const au8Data[], uint32_t u32Size, uint32_t u32Timeout)
 {
-    return I2C_Start(I2C_UNIT,TIMEOUT);
+    en_result_t enRet;
+
+    I2C_Cmd(I2C_UNIT, Enable);
+
+    I2C_SWResetCmd(I2C_UNIT, Enable);
+    I2C_SWResetCmd(I2C_UNIT, Disable);
+    enRet = I2C_Start(I2C_UNIT,u32Timeout);
+    if(Ok == enRet)
+    {
+
+#ifdef I2C_10BITS_ADDRESS
+        enRet = I2C_Trans10BitAddr(I2C_UNIT, u16DevAddr, I2C_DIR_TX, u32Timeout);
+#else
+        enRet = I2C_TransAddr(I2C_UNIT, (uint8_t)u16DevAddr, I2C_DIR_TX, u32Timeout);
+#endif
+
+        if(Ok == enRet)
+        {
+            enRet = I2C_TransData(I2C_UNIT, au8Data, u32Size,u32Timeout);
+        }
+    }
+
+    (void)I2C_Stop(I2C_UNIT,u32Timeout);
+    I2C_Cmd(I2C_UNIT, Disable);
+
+    return enRet;
 }
 
 /**
- * @brief  Send slave address
- * @param  [in]  u8Addr            The slave address
- * @retval en_result_t              Enumeration value:
+ * @brief  Master receive data
+ *
+ * @param  u16DevAddr            The slave address
+ * @param  au8Data               The data array
+ * @param  u32Size               Data size
+ * @param  u32Timeout            Time out count
+ * @retval en_result_t           Enumeration value:
  *         @arg Ok:                 Success
  *         @arg ErrorTimeout:       Time out
  */
-static en_result_t Master_SendAddr(uint8_t u8Addr)
+static en_result_t I2C_Master_Receive(uint16_t u16DevAddr, uint8_t au8Data[], uint32_t u32Size, uint32_t u32Timeout)
 {
-   return I2C_AddrTrans(I2C_UNIT,u8Addr,TIMEOUT);
-}
+    en_result_t enRet;
 
-/**
- * @brief  Send data to slave
- * @param  [in]  pu8TxData         Pointer to the data buffer
- * @param  [in]  u32Size           Data size
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Success
- *         @arg ErrorTimeout:       Time out
- */
-static en_result_t Master_WriteData(const uint8_t *pu8TxData, uint32_t u32Size)
-{
-    return I2C_DataTrans(I2C_UNIT, pu8TxData, u32Size,TIMEOUT);
-}
+    I2C_Cmd(I2C_UNIT, Enable);
 
-/**
- * @brief  Write address and receive data from slave
- * @param  [in]  pu8RxData         Pointer to the data buffer
- * @param  [in]  u32Size           Data size
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Success
- *         @arg ErrorTimeout:       Time out
- */
-static en_result_t Master_RevData(uint8_t *pu8RxData, uint32_t u32Size)
-{
-    return I2C_DataReceive(I2C_UNIT, pu8RxData, u32Size,TIMEOUT);
-}
+    I2C_SWResetCmd(I2C_UNIT, Enable);
+    I2C_SWResetCmd(I2C_UNIT, Disable);
+    enRet = I2C_Start(I2C_UNIT,u32Timeout);
+    if(Ok == enRet)
+    {
+        if(1UL == u32Size)
+        {
+            I2C_AckConfig(I2C_UNIT, I2C_NACK);
+        }
 
-/**
- * @brief  General stop condition to slave
- * @param  None
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Success
- *         @arg ErrorTimeout:       Time out
- */
-static en_result_t Master_Stop(void)
-{
-   return I2C_Stop(I2C_UNIT,TIMEOUT);
+#ifdef I2C_10BITS_ADDRESS
+        enRet = I2C_Trans10BitAddr(I2C_UNIT, u16DevAddr, I2C_DIR_RX, u32Timeout);
+#else
+        enRet = I2C_TransAddr(I2C_UNIT, (uint8_t)u16DevAddr, I2C_DIR_RX, u32Timeout);
+#endif
+
+        if(Ok == enRet)
+        {
+            enRet = I2C_MasterReceiveDataAndStop(I2C_UNIT, au8Data, u32Size, u32Timeout);
+        }
+
+        I2C_AckConfig(I2C_UNIT, I2C_ACK);
+    }
+
+    if(Ok != enRet)
+    {
+        (void)I2C_Stop(I2C_UNIT,u32Timeout);
+    }
+
+    I2C_Cmd(I2C_UNIT, Disable);
+
+    return enRet;
 }
 
 /**
@@ -192,28 +222,9 @@ static en_result_t Master_Initialize(void)
     stcI2cInit.u32ClockDiv = I2C_CLK_DIV4;
     enRet = I2C_Init(I2C_UNIT, &stcI2cInit, &fErr);
 
-    if(Ok == enRet)
-    {
-        I2C_Cmd(I2C_UNIT, Enable);
-    }
-    return enRet;
-}
+    I2C_BusWaitCmd(I2C_UNIT, Enable);
 
-/**
- * @brief   Judge the result. LED0 toggle when result is error status.
- * @param   [in]  enRet    Result to be judged
- * @retval  None
- */
-static void JudgeResult(en_result_t enRet)
-{
-    if(Ok != enRet)
-    {
-        for(;;)
-        {
-            BSP_LED_Toggle(LED_RED);
-            DDL_DelayMS(500U);
-        }
-    }
+    return enRet;
 }
 
 /**
@@ -257,7 +268,6 @@ int32_t main(void)
 {
 
     uint32_t i;
-    en_result_t enRet = Ok;
 
     /* Register write unprotected for some required peripherals. */
     Peripheral_WE();
@@ -277,8 +287,8 @@ int32_t main(void)
     }
 
     /* Initialize I2C port*/
-    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, GPIO_FUNC_7_I2C);
-    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, GPIO_FUNC_7_I2C);
+    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, I2C_GPIO_FUNC);
+    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, I2C_GPIO_FUNC);
 
     /* Enable I2C Peripheral*/
     CLK_FcgPeriphClockCmd(CLK_FCG_IIC, Enable);
@@ -298,27 +308,13 @@ int32_t main(void)
     WaitKeyShortPress();
 
     /* I2C master data write*/
-    enRet = Master_Start();
-    JudgeResult(enRet);
-    enRet = Master_SendAddr(((uint8_t)DEVICE_ADDR<<1U)|ADDRESS_W);
-    JudgeResult(enRet);
-    enRet = Master_WriteData(u8TxBuf, TEST_DATA_LEN);
-    JudgeResult(enRet);
-    enRet = Master_Stop();
-    JudgeResult(enRet);
+    (void)I2C_Master_Transmit(DEVICE_ADDR, u8TxBuf, TEST_DATA_LEN, TIMEOUT);
 
-    /* 5mS delay for device*/
-    DDL_DelayMS(1U);
+    /* 50mS delay for device*/
+    DDL_DelayMS(50U);
 
     /* I2C master data read*/
-    enRet = Master_Start();
-    JudgeResult(enRet);
-    enRet = Master_SendAddr(((uint8_t)DEVICE_ADDR<<1U)|ADDRESS_R);
-    JudgeResult(enRet);
-    enRet = Master_RevData(u8RxBuf, TEST_DATA_LEN);
-    JudgeResult(enRet);
-    enRet = Master_Stop();
-    JudgeResult(enRet);
+    (void)I2C_Master_Receive(DEVICE_ADDR, u8RxBuf, TEST_DATA_LEN, TIMEOUT);
 
     /* Compare the data */
     for(i=0U; i<TEST_DATA_LEN; i++)

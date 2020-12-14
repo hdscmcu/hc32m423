@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -73,7 +74,7 @@ extern "C"
   Global function prototypes (definition in C source)
  ******************************************************************************/
 /**
- * @defgroup EV_HC32M423_LQFP64_BL24C02F_Global_Functions BL24C02F E2PROM Global Functions
+ * @defgroup EV_HC32M423_LQFP64_BL24C02F_Global_Functions BL24C02F EEPROM Global Functions
  * @{
  */
 
@@ -83,13 +84,14 @@ en_result_t BSP_BL24C02F_I2C_Start(void);
 en_result_t BSP_BL24C02F_I2C_Restart(void);
 en_result_t BSP_BL24C02F_I2C_Stop(void);
 
-en_result_t BSP_BL24C02F_I2C_AddrTrans(uint8_t u8Addr);
-en_result_t BSP_BL24C02F_I2C_DataAddrTrans(uint8_t u8DataAddr);
-en_result_t BSP_BL24C02F_I2C_DataTrans(uint8_t const au8TxData[], uint32_t u32Size);
-en_result_t BSP_BL24C02F_I2C_DataReceive(uint8_t au8RxData[], uint32_t u32Size);
+en_result_t BSP_BL24C02F_I2C_TransAddr(uint8_t u8Addr, uint8_t u8Dir);
+en_result_t BSP_BL24C02F_I2C_TransData(uint8_t const au8TxData[], uint32_t u32Size);
+en_result_t BSP_BL24C02F_I2C_ReceiveDataAndStop(uint8_t au8RxData[], uint32_t u32Size);
 
-en_result_t BSP_BL24C02F_I2C_WaitReady(void);
-
+void BSP_BL24C02F_I2C_SWReset(void);
+void BSP_BL24C02F_I2C_Cmd(en_functional_state_t enNewState);
+void BSP_BL24C02F_I2C_AckConfig(uint32_t u32AckConfig);
+en_flag_status_t BSP_BL24C02F_I2C_GetAckStatus(void);
 /**
  * @}
  */

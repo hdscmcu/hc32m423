@@ -79,7 +79,7 @@ typedef struct
 #define USART_TC_IRQn                   (INT003_IRQn)
 
 /* Ring buffer size */
-#define IS_RING_BUF_EMPYT(x)            (0U == ((x)->u16UsedSize))
+#define IS_RING_BUF_EMPTY(x)            (0U == ((x)->u16UsedSize))
 
 /*******************************************************************************
  * Global variable definitions (declared in header file with 'extern')
@@ -108,6 +108,7 @@ static stc_ring_buf_t m_stcRingBuf = {
     .u16UsedSize = 0,
     .u16Capacity = sizeof (m_stcRingBuf.au8Buf),
 };
+static uint8_t m_u8Status;
 
 /*******************************************************************************
  * Function implementation - global ('extern') and local ('static')
@@ -153,13 +154,12 @@ static void Peripheral_WP(void)
 static void USART_TxEmpty_IrqCallback(void)
 {
     uint8_t u8Data = 0U;
-
     if (Ok == RingBufRead(&m_stcRingBuf, &u8Data))
     {
         USART_WriteData(USART_UNIT, (uint16_t)u8Data);
     }
 
-    if (IS_RING_BUF_EMPYT(&m_stcRingBuf))
+    if (IS_RING_BUF_EMPTY(&m_stcRingBuf))
     {
         USART_FuncCmd(USART_UNIT, USART_INT_TX_EMPTY, Disable);
         USART_FuncCmd(USART_UNIT, USART_INT_TX_CPLT, Enable);
@@ -174,6 +174,7 @@ static void USART_TxEmpty_IrqCallback(void)
 static void USART_TxComplete_IrqCallback(void)
 {
     USART_FuncCmd(USART_UNIT, (USART_TX | USART_INT_TX_CPLT), Disable);
+    m_u8Status = 0U;
 }
 
 /**
@@ -281,6 +282,7 @@ static void InstalIrqHandler(const stc_irq_signin_config_t *pstcConfig,
  */
 int32_t main(void)
 {
+    m_u8Status = 0U;
     stc_irq_signin_config_t stcIrqConfig;
     const stc_usart_uart_init_t stcUartInit = {
         .u32Baudrate = 115200UL,
@@ -351,9 +353,10 @@ int32_t main(void)
 
     for (;;)
     {
-        if (!IS_RING_BUF_EMPYT(&m_stcRingBuf))
+        if ((!IS_RING_BUF_EMPTY(&m_stcRingBuf)) && (m_u8Status ==0U))
         {
             USART_FuncCmd(USART_UNIT, (USART_TX | USART_INT_TX_EMPTY), Enable);
+            m_u8Status =1U;
         }
     }
 }

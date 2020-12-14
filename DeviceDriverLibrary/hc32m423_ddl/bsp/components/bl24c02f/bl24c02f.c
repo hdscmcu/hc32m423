@@ -1,11 +1,12 @@
 /**
  *******************************************************************************
  * @file  bl24c02f.c
- * @brief This midware file provides firmware functions to BL24C02F E2PROM.
+ * @brief This midware file provides firmware functions to BL24C02F EEPROM.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -34,7 +35,7 @@
  * @{
  */
 
-/** @defgroup BL24C02F E2PROM Driver for BL24C02F
+/** @defgroup BL24C02F EEPROM Driver for BL24C02F
   * @{
   */
 
@@ -51,11 +52,11 @@
  * @defgroup BL24C02F_Local_Macros BL24C02F Local Macros
  * @{
  */
-#define ADDR_WR                     (0x00U)
-#define ADDR_RD                     (0x01U)
-
 #define BL24C02F_ADDR               (0x50U)
 #define BL24C02F_PAGE_SIZE          (16U)
+
+#define BL24C02F_MEM_SIZE           (256UL)
+#define BL24C02F_WAIT_TIMEOUT       (1000UL)
 /**
  * @}
  */
@@ -71,8 +72,7 @@
  * @defgroup BL24C02F_Local_Functions BL24C02F Local Functions
  * @{
  */
-
-
+static en_result_t BL24C02F_I2C_GetStatus(void);
 /**
  * @}
  */
@@ -112,23 +112,55 @@ en_result_t BL24C02F_Init(void)
  */
 en_result_t BL24C02F_ReadBuf(uint8_t u8ReadAddr, uint8_t au8ReadBuf[], uint32_t u32NumByte)
 {
-    en_result_t enRet = Ok;
-    uint32_t u32Ret;
-    /* E2prom random read*/
-    u32Ret = (uint32_t)BSP_BL24C02F_I2C_Start();
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_AddrTrans((uint8_t)(BL24C02F_ADDR << 1U) | ADDR_WR);
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_DataAddrTrans(u8ReadAddr);
+    en_result_t enRet;
+    uint8_t u8MemAddrTemp = u8ReadAddr;
 
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_Restart();
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_AddrTrans((uint8_t)(BL24C02F_ADDR << 1U) | ADDR_RD);
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_DataReceive(au8ReadBuf, u32NumByte);
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_Stop();
-
-    if((uint32_t)Ok != u32Ret)
+    if((u8ReadAddr + u32NumByte) > BL24C02F_MEM_SIZE)
     {
-        enRet = Error;
+        return Error;
     }
 
+    BSP_BL24C02F_I2C_Cmd(Enable);
+    BSP_BL24C02F_I2C_SWReset();
+
+    enRet = BSP_BL24C02F_I2C_Start();
+
+    if(Ok == enRet)
+    {
+        enRet = BSP_BL24C02F_I2C_TransAddr(BL24C02F_ADDR, I2C_DIR_TX);
+
+        if(Ok == enRet)
+        {
+            enRet = BSP_BL24C02F_I2C_TransData(&u8MemAddrTemp, 1U);
+            if(Ok == enRet)
+            {
+                enRet = BSP_BL24C02F_I2C_Restart();
+                if(Ok == enRet)
+                {
+                    if(1UL == u32NumByte)
+                    {
+                        BSP_BL24C02F_I2C_AckConfig(I2C_NACK);
+                    }
+
+                    enRet = BSP_BL24C02F_I2C_TransAddr(BL24C02F_ADDR, I2C_DIR_RX);
+                    if(Ok == enRet)
+                    {
+                        enRet = BSP_BL24C02F_I2C_ReceiveDataAndStop(au8ReadBuf, u32NumByte);
+                    }
+
+                    BSP_BL24C02F_I2C_AckConfig(I2C_ACK);
+                }
+
+            }
+        }
+    }
+
+    if(Ok != enRet)
+    {
+        (void)BSP_BL24C02F_I2C_Stop();
+    }
+
+    BSP_BL24C02F_I2C_Cmd(Disable);
     return enRet;
 }
 
@@ -140,25 +172,45 @@ en_result_t BL24C02F_ReadBuf(uint8_t u8ReadAddr, uint8_t au8ReadBuf[], uint32_t 
  * @retval en_result_t              Enumeration value:
  *         @arg Ok:                 Write successfully
  *         @arg Error:              Write failed
+ *         @arg ErrorTimeout:       Time out
  * @note   This function don't check if the data write is whthin one page
  */
 en_result_t BL24C02F_WritePage(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], uint32_t u32NumByte)
 {
-    en_result_t enRet = Ok;
-    uint32_t u32Ret;
+    en_result_t enRet;
+    uint8_t u8MemAddrTemp = u8WriteAddr;
 
-    u32Ret = (uint32_t)BSP_BL24C02F_I2C_Start();
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_AddrTrans((uint8_t)(BL24C02F_ADDR<<1U) | ADDR_WR);
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_DataAddrTrans(u8WriteAddr);
-
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_DataTrans(au8WriteBuf, u32NumByte);
-    u32Ret |= (uint32_t)BSP_BL24C02F_I2C_Stop();
-
-    if((uint32_t)Ok != u32Ret)
+    if((u8WriteAddr + u32NumByte) > BL24C02F_MEM_SIZE)
     {
-        enRet = Error;
+        return Error;
     }
 
+    BSP_BL24C02F_I2C_Cmd(Enable);
+    BSP_BL24C02F_I2C_SWReset();
+
+    enRet = BSP_BL24C02F_I2C_Start();
+    if(Ok == enRet)
+    {
+        enRet = BSP_BL24C02F_I2C_TransAddr(BL24C02F_ADDR, I2C_DIR_TX);
+
+        if(Ok == enRet)
+        {
+            enRet = BSP_BL24C02F_I2C_TransData(&u8MemAddrTemp, 1U);
+            if(Ok == enRet)
+            {
+                enRet = BSP_BL24C02F_I2C_TransData(au8WriteBuf, u32NumByte);
+            }
+        }
+    }
+
+    (void)BSP_BL24C02F_I2C_Stop();
+
+    BSP_BL24C02F_I2C_Cmd(Disable);
+
+    if(Ok != BL24C02F_I2C_WaitIdle())
+    {
+        enRet = ErrorTimeout;
+    }
     return enRet;
 }
 
@@ -167,7 +219,10 @@ en_result_t BL24C02F_WritePage(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[],
  * @param  [in] u8WriteAddr:        The start address of the data to be write.
  * @param  [in] au8WriteBuf:        The pointer to the buffer contains the data to be write.
  * @param  [in] u32NumByte:         Buffer size in byte.
- * @retval None
+ * @retval en_result_t              Enumeration value:
+ *         @arg Ok:                 Write successfully
+ *         @arg Error:              Write failed
+ *         @arg ErrorTimeout:       Time out
  */
 en_result_t BL24C02F_WriteBuf(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], uint32_t u32NumByte)
 {
@@ -178,6 +233,11 @@ en_result_t BL24C02F_WriteBuf(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], 
     uint32_t u32WriteOffset = 0UL;
     uint8_t u8WriteAddrTemp = u8WriteAddr;
     en_result_t enRet = Ok;
+
+    if((u8WriteAddr + u32NumByte) > BL24C02F_MEM_SIZE)
+    {
+        return Error;
+    }
 
     /* If start write address is align with page size */
     if(0U == (u8WriteAddrTemp % BL24C02F_PAGE_SIZE))
@@ -210,40 +270,59 @@ en_result_t BL24C02F_WriteBuf(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], 
 
     if(0UL != u8SingleNumStart)
     {
-      enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), (uint32_t)u8SingleNumStart);
+        enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), (uint32_t)u8SingleNumStart);
         u8WriteAddrTemp += u8SingleNumStart;
         u32WriteOffset += (uint32_t)u8SingleNumStart;
     }
 
-    if(0UL != u32PageNum)
+    if(Ok == enRet)
     {
-        for(uint32_t i=0UL; i<u32PageNum; i++)
+        if(0UL != u32PageNum)
         {
-            enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), BL24C02F_PAGE_SIZE);
-            u8WriteAddrTemp += BL24C02F_PAGE_SIZE;
-            u32WriteOffset += BL24C02F_PAGE_SIZE;
+            for(uint32_t i=0UL; i<u32PageNum; i++)
+            {
+                enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), BL24C02F_PAGE_SIZE);
+                u8WriteAddrTemp += BL24C02F_PAGE_SIZE;
+                u32WriteOffset += BL24C02F_PAGE_SIZE;
+                if(Ok != enRet)
+                {
+                    break;
+                }
+            }
+        }
+
+        if(Ok == enRet)
+        {
+            if(0UL != u8SingleNumEnd)
+            {
+                enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), (uint32_t)u8SingleNumEnd);
+            }
         }
     }
 
-    if(0UL != u8SingleNumEnd)
-    {
-        enRet = BL24C02F_WritePage(u8WriteAddrTemp, (const uint8_t*)(&au8WriteBuf[0] + u32WriteOffset), (uint32_t)u8SingleNumEnd);
-    }
     return enRet;
 }
 
-
 /**
- * @brief  BL24C02F write block of data.
+ * @brief  BL24C02F wait idle.
  * @param  None
- * @retval en_result_t
+ * @retval en_result_t           Enumeration value:
+ *         @arg Ok:                 Wait idle ok
+ *         @arg ErrorTimeout:       Wait idle time out
  */
-en_result_t BL24C02F_WaitReady(void)
+en_result_t BL24C02F_I2C_WaitIdle(void)
 {
-    return BSP_BL24C02F_I2C_WaitReady();
+    en_result_t enRet = Ok;
+    __IO uint32_t u32Tmp = 0UL;
+    while(Ok != BL24C02F_I2C_GetStatus())
+    {
+       if(BL24C02F_WAIT_TIMEOUT == u32Tmp++)
+       {
+           enRet = ErrorTimeout;
+       }
+    }
+    return enRet;
 }
-
-
 
 /**
  * @}
@@ -254,7 +333,40 @@ en_result_t BL24C02F_WaitReady(void)
  * @{
  */
 
+/**
+ * @brief  BL24C02F write block of data.
+ * @param  None
+ * @retval en_result_t           Enumeration value:
+ *         @arg Ok:                 Idle
+ *         @arg Error:              Busy
+ *         @arg ErrorTimeout:       Time out
+ */
+static en_result_t BL24C02F_I2C_GetStatus(void)
+{
+    en_result_t enRet;
 
+    BSP_BL24C02F_I2C_Cmd(Enable);
+    BSP_BL24C02F_I2C_SWReset();
+
+    enRet = BSP_BL24C02F_I2C_Start();
+    if(Ok == enRet)
+    {
+        enRet = BSP_BL24C02F_I2C_TransAddr(BL24C02F_ADDR, I2C_DIR_TX);
+
+        if(Ok == enRet)
+        {
+            if(Set == BSP_BL24C02F_I2C_GetAckStatus())
+            {
+                enRet = Error;
+            }
+        }
+    }
+
+    (void)BSP_BL24C02F_I2C_Stop();
+
+    BSP_BL24C02F_I2C_Cmd(Disable);
+    return enRet;
+}
 
 /**
  * @}

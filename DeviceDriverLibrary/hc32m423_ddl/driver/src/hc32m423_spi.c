@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Corrected comments of SPI unit.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -179,7 +180,7 @@ static en_result_t SPI_WaitStatus(const CM_SPI_TypeDef *SPIx, uint32_t u32FlagMs
  *         in the structure stc_spi_init.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pstcSpiInit            Pointer to a stc_spi_init_t structure that contains
  *                                      the configuration information for the SPI.
  * @retval An en_result_t enumeration value:
@@ -226,7 +227,7 @@ en_result_t SPI_Init(CM_SPI_TypeDef *SPIx, const stc_spi_init_t *pstcSpiInit)
  * @brief  De-initializes the SPI peripheral.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @retval None
  */
 void SPI_DeInit(CM_SPI_TypeDef *SPIx)
@@ -276,7 +277,7 @@ en_result_t SPI_StructInit(stc_spi_init_t *pstcSpiInit)
  * @brief  Enable or disable SPI interrupt.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32IntType             SPI interrupt type.
  *                                      This parameter can be values of @ref SPI_Interrupt_Type
  *   @arg  SPI_INT_ERR
@@ -309,7 +310,7 @@ void SPI_IntCmd(CM_SPI_TypeDef *SPIx, uint32_t u32IntType, en_functional_state_t
  * @brief  SPI function enable or disable.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  enNewState             An en_functional_state_t enumeration value.
  *   @arg  Enable:                      Enable SPI function.
  *   @arg  Disable:                     Disable SPI function.
@@ -334,7 +335,7 @@ void SPI_Cmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewState)
  * @brief  Enable or disable mode fault detection.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  enNewState             An en_functional_state_t enumeration value.
  *   @arg  Enable:                      Enable mode fault detection.
  *   @arg  Disable:                     Disable mode fault detection.
@@ -360,7 +361,7 @@ void SPI_ModeFaultDetectCmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewSta
  * @brief  SPI transmit data.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pvBuf                  The pointer to the buffer which contains the data to be sent.
  * @param  [in]  u32Len                 The length of the data to be sent.
  * @param  [in]  u32Timeout             Timeout value.
@@ -401,7 +402,7 @@ en_result_t SPI_Trans(CM_SPI_TypeDef *SPIx, const void *pvBuf, \
  * @brief  SPI receive data.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pvBuf                  The pointer to the buffer which the received data to be stored.
  * @param  [in]  u32Len                 The length of the data to be received.
  * @param  [in]  u32Timeout             Timeout value.
@@ -432,7 +433,7 @@ en_result_t SPI_Receive(CM_SPI_TypeDef *SPIx, void *pvBuf, \
  * @brief  SPI transmit and receive data.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pvTxBuf                The pointer to the buffer which contains the data to be sent.
  *                                      If this pointer is NULL and the pvRxBuf is NOT NULL, the MOSI output high
  *                                      and the the received data will be stored in the buffer pointed by pvRxBuf.
@@ -466,7 +467,7 @@ en_result_t SPI_TransReceive(CM_SPI_TypeDef *SPIx, const void *pvTxBuf, void *pv
  * @brief  SPI get status of the specified flag.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32Flag                SPI Flag.
  *                                      This parameter can be a value of @ref SPI_Flag
  *   @arg  SPI_FLAG_OVERLOAD
@@ -512,7 +513,7 @@ en_flag_status_t SPI_GetStatus(const CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
  * @brief  SPI clear flags.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32Flag                SPI flags.
  *                                      This parameter can be values of @ref SPI_Flag.
  *   @arg  SPI_FLAG_OVERLOAD
@@ -534,7 +535,7 @@ void SPI_ClearStatus(CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
  * @brief  SPI specifies loopback mode.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32Mode                SPI loopback mode.
  *                                      This parameter can be a value of @ref SPI_Loopback_Mode
  *   @arg  SPI_LOOPBACK_INVD:           Loopback mode is invalid. Normal mode.
@@ -554,7 +555,7 @@ void SPI_SetLoopbackMode(CM_SPI_TypeDef *SPIx, uint32_t u32Mode)
  * @brief  SPI enable or disable parity check error self diagnosis.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  enNewState             An en_functional_state_t enumeration value.
  *   @arg  Enable:                      Enable parity check error self diagnosis.
  *   @arg  Disable:                     Disable parity check error self diagnosis.
@@ -588,7 +589,7 @@ void SPI_ParitySelfDiagnosisCmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNe
  * @brief  SPI transmit and receive data in full duplex mode.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pvTxBuf                The pointer to the buffer which contains the data to be sent.
  * @param  [out] pvRxBuf                The pointer to the buffer which the received data will be stored.
  * @param  [in]  u32Len                 The length of the data in byte or half word.
@@ -669,7 +670,7 @@ static en_result_t SPI_TxRx(CM_SPI_TypeDef *SPIx, const void *pvTxBuf, void *pvR
  * @brief  SPI send data only.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  pvBuf                  The pointer to the buffer which contains the data to be sent.
  * @param  [in]  u32Len                 The length of the data in byte or half word.
  * @param  [in]  u32Timeout             Timeout value.
@@ -718,7 +719,7 @@ static en_result_t SPI_Tx(CM_SPI_TypeDef *SPIx, const void *pvBuf, \
  * @brief  SPI check status.
  * @param  [in]  SPIx                   Pointer to SPI instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_SPI1:                     SPI unit 1 instance register base.
+ *   @arg  CM_SPI:                      SPI unit instance register base.
  * @param  [in]  u32FlagMask            Bit mask of status flag.
  * @param  [in]  u32Value               Valid value of the status.
  * @param  [in]  u32Timeout             Timeout value.

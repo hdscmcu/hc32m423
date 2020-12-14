@@ -69,20 +69,6 @@
     ((x) == CTC_REF_CLK_DIV2048)                ||                             \
     ((x) == CTC_REF_CLK_DIV4096))
 
-#define IS_CTC_HRC_FREQ(x)                                                     \
-(   ((x) == CTC_TRIM_HRC_1P5M)                  ||                             \
-    ((x) == CTC_TRIM_HRC_2M)                    ||                             \
-    ((x) == CTC_TRIM_HRC_3M)                    ||                             \
-    ((x) == CTC_TRIM_HRC_4M)                    ||                             \
-    ((x) == CTC_TRIM_HRC_6M)                    ||                             \
-    ((x) == CTC_TRIM_HRC_8M)                    ||                             \
-    ((x) == CTC_TRIM_HRC_12M)                   ||                             \
-    ((x) == CTC_TRIM_HRC_16M)                   ||                             \
-    ((x) == CTC_TRIM_HRC_24M)                   ||                             \
-    ((x) == CTC_TRIM_HRC_32M)                   ||                             \
-    ((x) == CTC_TRIM_HRC_48M)                   ||                             \
-    ((x) == CTC_TRIM_HRC_64M))
-
 #define IS_CTC_OFFSET_VALUE(x)                  ((x) <= 0xFFUL)
 
 #define IS_CTC_RELOAD_VALUE(x)                  ((x) <= 0xFFFFUL)
@@ -95,6 +81,16 @@
 #define IS_CTC_FLAG(x)                                                         \
 (   ((x) != 0UL)                                &&                             \
     (((x) | CTC_FLAG_ALL) ==  CTC_FLAG_ALL))
+/**
+ * @}
+ */
+
+/**
+ * @defgroup CTC_Trim_HRC_Frequency CTC Trim HRC frequency
+ * @{
+ */
+#define CTC_TRIM_HRC_48M                (48000000UL)  /*!< CTC Trimming 48MHz */
+#define CTC_TRIM_HRC_64M                (64000000UL)  /*!< CTC Trimming 64MHz */
 /**
  * @}
  */
@@ -143,6 +139,8 @@ en_result_t CTC_Init(const stc_ctc_init_t *pstcCtcInit)
     uint32_t u32RefClockDiv;
     uint32_t u32Multiplier;
     uint64_t u64InterClock;
+    uint32_t u32HrcDiv;
+    uint32_t u32HrcFreq = CTC_TRIM_HRC_64M;
     en_result_t enRet = ErrorNotReady;
 
     /* Check CTC status */
@@ -155,11 +153,23 @@ en_result_t CTC_Init(const stc_ctc_init_t *pstcCtcInit)
         else
         {
             /* Check parameters */
-            DDL_ASSERT(IS_CTC_HRC_FREQ(pstcCtcInit->u32HrcFreq));
             DDL_ASSERT(IS_CTC_REF_CLK_SRC(pstcCtcInit->u32RefClockSrc));
             DDL_ASSERT(IS_CTC_REF_CLK_DIV(pstcCtcInit->u32RefClockDiv));
             DDL_ASSERT(IS_CTC_TRIM_VALUE(pstcCtcInit->u32TrimValue));
             DDL_ASSERT(IS_CTC_TOLERANCE_DEVIATION(pstcCtcInit->f32ToleranceDeviation));
+
+            if (READ_REG8_BIT(CM_EFM->HRCCFGR, EFM_HRCCFGR_HRCFREQS_3) > 0U)
+            {
+                u32HrcFreq = CTC_TRIM_HRC_48M;
+            }
+
+            u32HrcDiv = (uint32_t)READ_REG8_BIT(CM_EFM->HRCCFGR, (EFM_HRCCFGR_HRCFREQS_2|EFM_HRCCFGR_HRCFREQS_1|EFM_HRCCFGR_HRCFREQS_0));
+            if (u32HrcDiv > 5UL)
+            {
+                u32HrcDiv = 5UL;
+            }
+
+            u32HrcFreq >>= u32HrcDiv;
 
             if (pstcCtcInit->u32RefClockDiv < CTC_REF_CLK_DIV128)
             {
@@ -169,7 +179,7 @@ en_result_t CTC_Init(const stc_ctc_init_t *pstcCtcInit)
             {
                 u32RefClockDiv = (32UL << pstcCtcInit->u32RefClockDiv);
             }
-            u64InterClock = ((uint64_t)(pstcCtcInit->u32HrcFreq)) * ((uint64_t)(u32RefClockDiv));
+            u64InterClock = ((uint64_t)(u32HrcFreq)) * ((uint64_t)(u32RefClockDiv));
             u32Multiplier = (uint32_t)(u64InterClock / pstcCtcInit->u32RefClockFreq);
 
             /* Calculate offset value formula: OFSVAL = (Fhrc / (Fref * Fref_divsion)) * TA */
@@ -199,7 +209,7 @@ en_result_t CTC_Init(const stc_ctc_init_t *pstcCtcInit)
 }
 
 /**
- * @brief  Set the fields of structure stc_uart_init_t to default values.
+ * @brief  Set the fields of structure stc_ctc_init_t to default values.
  * @param  [out] pstcCtcInit        Pointer to a @ref stc_ctc_init_t structure.
  * @retval An en_result_t enumeration value:
  *           - Ok: Initialize success
@@ -212,11 +222,11 @@ en_result_t CTC_StructInit(stc_ctc_init_t *pstcCtcInit)
     /* Check parameters */
     if (NULL != pstcCtcInit)
     {
-        pstcCtcInit->u32HrcFreq = 0UL;
         pstcCtcInit->u32RefClockFreq = 0UL;
         pstcCtcInit->u32RefClockSrc = CTC_REF_CLK_CTCREF;
         pstcCtcInit->u32RefClockDiv = CTC_REF_CLK_DIV8;
         pstcCtcInit->f32ToleranceDeviation = 0.0F;
+        pstcCtcInit->u32TrimValue = 0UL;
         enRet = Ok;
     }
 

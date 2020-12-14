@@ -13923,15 +13923,15 @@
                             <access>write-only</access>
                         </field>
                         <field>
-                            <name>SMBDEFAULTF</name>
-                            <description>desc SMBDEFAULTF</description>
+                            <name>SMBDEFAULTFCLR</name>
+                            <description>desc SMBDEFAULTFCLR</description>
                             <msb>21</msb>
                             <lsb>21</lsb>
                             <access>write-only</access>
                         </field>
                         <field>
-                            <name>SMBHOSTFCL</name>
-                            <description>desc SMBHOSTFCL</description>
+                            <name>SMBHOSTFCLR</name>
+                            <description>desc SMBHOSTFCLR</description>
                             <msb>22</msb>
                             <lsb>22</lsb>
                             <access>write-only</access>
@@ -13988,7 +13988,7 @@
                     <size>32</size>
                     <access>read-write</access>
                     <resetValue>0x1F1F</resetValue>
-                    <resetMask>0x871F1F</resetMask>
+                    <resetMask>0x71F1F</resetMask>
                     <fields>
                         <field>
                             <name>SLOWW</name>
@@ -14009,13 +14009,6 @@
                             <description>desc CKDIV</description>
                             <msb>18</msb>
                             <lsb>16</lsb>
-                            <access>read-write</access>
-                        </field>
-                        <field>
-                            <name>FMPE</name>
-                            <description>desc FMPE</description>
-                            <msb>23</msb>
-                            <lsb>23</lsb>
                             <access>read-write</access>
                         </field>
                     </fields>

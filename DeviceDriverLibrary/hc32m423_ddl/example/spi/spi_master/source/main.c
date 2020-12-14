@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Refined this example.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -45,58 +46,58 @@
  * Defines the following macro as non-zero to enable the corresponding function.
  * 'SPI_FUNC_TEST_SLAVE': Used to test salve mode of SPI. It is used as master for 'spi_slave'
  */
-#define SPI_FUNC_TEST_SLAVE         (1U)
+#define SPI_FUNC_TEST_SLAVE             (1U)
 
 /*
  * SPI unit instance for this example.
  * 'SPI_UNIT' can only be defined as CM_SPI.
  */
-#define SPI_UNIT                    (CM_SPI)
-#define SPI_PERIPH_CLK              (CLK_FCG_SPI)
+#define SPI_UNIT                        (CM_SPI)
+#define SPI_PERIPH_CLK                  (CLK_FCG_SPI)
 
 /* SPI pin definition. */
-#define SPI_NSS_PORT                (GPIO_PORT_D)
-#define SPI_NSS_PIN                 (GPIO_PIN_6)
-#define SPI_SCK_PORT                (GPIO_PORT_D)
-#define SPI_SCK_PIN                 (GPIO_PIN_4)
-#define SPI_MOSI_PORT               (GPIO_PORT_D)
-#define SPI_MOSI_PIN                (GPIO_PIN_3)
-#define SPI_MISO_PORT               (GPIO_PORT_D)
-#define SPI_MISO_PIN                (GPIO_PIN_5)
+#define SPI_NSS_PORT                    (GPIO_PORT_D)
+#define SPI_NSS_PIN                     (GPIO_PIN_6)
+#define SPI_SCK_PORT                    (GPIO_PORT_D)
+#define SPI_SCK_PIN                     (GPIO_PIN_4)
+#define SPI_MOSI_PORT                   (GPIO_PORT_D)
+#define SPI_MOSI_PIN                    (GPIO_PIN_3)
+#define SPI_MISO_PORT                   (GPIO_PORT_D)
+#define SPI_MISO_PIN                    (GPIO_PIN_5)
 
 /* SPI wire mode definition. @ref SPI_Wire_Mode */
-#define SPI_WIRE_MD                 (SPI_4WIRE)
+#define SPI_WIRE_MD                     (SPI_4WIRE)
 
 /*
  * SPI standard mode. @ref SPI_Standard_Mode
  * NOTE: Only SPI_MD1 and SPI_MD3 can be used in 3-wire slave mode.
  */
-#define SPI_MD                      (SPI_MD1)
+#define SPI_MD                          (SPI_MD1)
 
 /* SPI transmission mode. @ref SPI_Trans_Mode */
-#define SPI_TRANS_MD                (SPI_FULL_DUPLEX)
+#define SPI_TRANS_MD                    (SPI_FULL_DUPLEX)
 
 /*
  * SPI baud rate divider. @ref SPI_Clock_Divider
  * NOTE! The maximum transmission baud rate of the slave is PCLK1/6, slave's PCLK1. \
      Master baud rate depends on slave baud rate.
  */
-#define SPI_CLK_DIV                 (SPI_CLK_DIV8)
+#define SPI_CLK_DIV                     (SPI_CLK_DIV8)
 
 /* SPI NSS pin active level. @ref SPI_NSS_Active_Level */
-#define SPI_NSS_ACTIVE_LEVEL        (SPI_NSS_ACTIVE_LOW)
+#define SPI_NSS_ACTIVE_LEVEL            (SPI_NSS_ACTIVE_LOW)
 
 /* SPI data buffer size definition. */
-#define SPI_BUF_LEN                 (8U)
+#define SPI_BUF_LEN                     (8U)
 
 /* Customer definitions. */
 #if (SPI_FUNC_TEST_SLAVE > 0U)
-    #define SPI_CMD_WR_SLAVE        (0x51U)     /* Customer definition. */
-    #define SPI_CMD_RD_SLAVE        (0x56U)     /* Customer definition. */
+    #define SPI_CMD_WR_SLAVE            (0x51U)     /* Customer definition. */
+    #define SPI_CMD_RD_SLAVE            (0x56U)     /* Customer definition. */
 #endif
 
 /* SPI timeout value. According to max clock divider of PCLK1 and SPI. */
-#define SPI_TIMEOUT                 (16384UL)
+#define SPI_TIMEOUT                     (16384UL)
 
 /* Debug printing definition. */
 #if (DDL_PRINT_ENABLE == DDL_ON)
@@ -121,11 +122,10 @@ static void SpiConfig(void);
  * Local variable definitions ('static')
  ******************************************************************************/
 #if (SPI_FUNC_TEST_SLAVE > 0U)
-    static uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = {0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0U, 0U};
-    /* Valid data starts at offset 2 and length is SPI_BUF_LEN-2. */
+    static uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = {0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57};
     static uint8_t m_au8SpiRxBuf[SPI_BUF_LEN];
 #else
-    static uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = {0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0U, 0U};
+    static uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = {0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57};
 #if (SPI_TRANS_MD == SPI_FULL_DUPLEX)
     static uint8_t m_au8SpiRxBuf[SPI_BUF_LEN];
 #endif
@@ -164,7 +164,7 @@ int32_t main(void)
 
     for (;;)
     {
-    	/* Press key SW1 to start. */
+        /* Press key SW1 to start. */
         while (BSP_KEY_GetStatus(BSP_KEY_1, BSP_KEY_MD_GPIO) == Reset)
         {
             __NOP();
@@ -187,9 +187,9 @@ int32_t main(void)
         /* Delay for slave handling data. */
         DDL_DelayMS(50U);
         (void)SPI_Receive(SPI_UNIT, (uint8_t *)&m_au8SpiRxBuf[0U], SPI_BUF_LEN, SPI_TIMEOUT);
-        /* User code: Use the data received from slave. Valid data starts at offset 2. */
+        /* User code: Use the data received from slave. */
         DBG("Master received data:");
-        for (i=2UL; i<SPI_BUF_LEN; i++)
+        for (i=0UL; i<SPI_BUF_LEN; i++)
         {
             DBG(" 0x%.2x", m_au8SpiRxBuf[i]);
         }

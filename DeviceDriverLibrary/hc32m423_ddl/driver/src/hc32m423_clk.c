@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-06       CDT             Fix bug for CLK_SetSysclkSrc() and CLK_ClockDiv()
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -327,6 +328,7 @@
 /*******************************************************************************
  * Local function prototypes ('static')
  ******************************************************************************/
+static uint32_t Get_TargetClockFreq(uint8_t u8Clock);
 
 /*******************************************************************************
  * Local variable definitions ('static')
@@ -335,6 +337,80 @@
 /*******************************************************************************
  * Function implementation - global ('extern') and local ('static')
  ******************************************************************************/
+
+/**
+ * @defgroup CLK_Local_Functions CLK Local Functions
+ * @{
+ */
+/**
+ * @brief  Get target clock frequency.
+ * @param  [in] u8Clock             Specifies the source of clock.
+ *                                  @ref CLK_System_Clock_Src
+ *         This parameter can be one of the following values:
+ *   @arg  CLK_SYSCLK_SRC_HRC
+ *   @arg  CLK_SYSCLK_SRC_XTAL
+ *   @arg  CLK_SYSCLK_SRC_LRC
+ *   @arg  CLK_SYSCLK_SRC_MRC
+ *   @arg  CLK_SYSCLK_SRC_PLL
+ * @retval uint32_t
+ */
+static uint32_t Get_TargetClockFreq(uint8_t u8Clock)
+{
+    uint32_t u32Freq;
+    uint32_t plln;
+    uint32_t pllp;
+    uint32_t pllm;
+    uint32_t pll_hrc_in;
+
+    switch(u8Clock)
+    {
+        case CLK_SYSCLK_SRC_HRC:
+            /* Hrc used as system clock. */
+            u32Freq = HRC_VALUE;
+            break;
+        case CLK_SYSCLK_SRC_MRC:
+            /* Mrc used as system clock. */
+            u32Freq = MRC_VALUE;
+            break;
+        case CLK_SYSCLK_SRC_LRC:
+            /* Lrc used as system clock. */
+            u32Freq = LRC_VALUE;
+            break;
+        case CLK_SYSCLK_SRC_XTAL:
+            /* Xtal used as system clock. */
+            u32Freq = XTAL_VALUE;
+            break;
+        default:
+            /* PLL is used as system clock. */
+            pllp = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLP) >> CMU_PLLCFGR_PLLP_POS);
+            plln = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLN) >> CMU_PLLCFGR_PLLN_POS);
+            pllm = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLM) >> CMU_PLLCFGR_PLLM_POS);
+
+            /* fpll = ((pllin / pllm) * plln) / pllp */
+            if (CLK_PLLSRC_XTAL == READ_REG32_BIT(CM_CMU->PLLCFGR, CMU_PLLCFGR_PLLSRC))
+            {
+                u32Freq = ((XTAL_VALUE/(pllm + 1UL))*(plln + 1UL))/(pllp + 1UL);
+            }
+            else
+            {
+                if(0UL == bCM_EFM->HRCCFGR_b.HRCFREQS3)
+                {
+                    pll_hrc_in = CLK_PLL_SRC_XTAL_FREQ_64M;
+                }
+                else
+                {
+                    pll_hrc_in = CLK_PLL_SRC_XTAL_FREQ_48M;
+                }
+                u32Freq = ((pll_hrc_in/(pllm + 1UL))*(plln + 1UL))/(pllp + 1UL);
+            }
+            break;
+    }
+    return u32Freq;
+}
+/**
+ * @}
+ */
+
 /**
  * @defgroup CLK_Global_Functions CLK Global Functions
  * @{
@@ -860,11 +936,11 @@ void CLK_SetSysclkSrc(uint8_t u8Src)
     DDL_ASSERT(IS_CLK_SYSCLK_SRC(u8Src));
     DDL_ASSERT(IS_CLK_UNLOCKED());
 
-    /* Only current system clock source or target system clock source is Mrc
+    /* Only current system clock source or target system clock source is PLL
     need to close fcg and open fcg during switch system clock source.
     We need to backup fcg before close them. */
-    if ((CLK_SYSCLK_SRC_MRC == READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW)) \
-        || (CLK_SYSCLK_SRC_MRC == u8Src))
+    if ((CLK_SYSCLK_SRC_PLL == READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW)) \
+        || (CLK_SYSCLK_SRC_PLL == u8Src))
     {
         if(CLK_FCG_DEFAULT != READ_REG32(CM_CMU->FCG))
         {
@@ -881,9 +957,9 @@ void CLK_SetSysclkSrc(uint8_t u8Src)
     }
 
     /* If SystemCore Clock >= 72MHz */
-    if(SystemCoreClock >= ((72UL*1000UL)*1000UL))
+    if(Get_TargetClockFreq(u8Src) >= ((72UL*1000UL)*1000UL))
     {
-        CLEAR_REG8_BIT(CM_PWC->FPRC, PWC_PWRC_DVS);
+        CLEAR_REG16_BIT(CM_PWC->PWRC, PWC_PWRC_DVS);
         /* Wait stable after open fcg */
         timeout = 0UL;
         do
@@ -949,10 +1025,10 @@ void CLK_ClockDiv(uint8_t u8ClockCate, uint32_t u32Div)
     DDL_ASSERT(IS_CLK_CATE(u8ClockCate));
     DDL_ASSERT(IS_CLK_UNLOCKED());
 
-    /* Only current system clock source or target system clock source is Mrc
+    /* Only current system clock source or target system clock source is PLL
     need to close fcg and open fcg during switch system clock source.
     We need to backup fcg before close them. */
-    if (CLK_SYSCLK_SRC_MRC == READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW))
+    if (CLK_SYSCLK_SRC_PLL == READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW))
     {
         if(CLK_FCG_DEFAULT != READ_REG32(CM_CMU->FCG))
         {
@@ -1076,10 +1152,6 @@ void CLK_MCOCmd(en_functional_state_t enNewState)
 en_result_t CLK_GetClockFreq(stc_clock_freq_t *pstcClockFreq)
 {
     en_result_t enRet = Ok;
-    uint32_t plln;
-    uint32_t pllp;
-    uint32_t pllm;
-    uint32_t pll_hrc_in;
 
     if (NULL == pstcClockFreq)
     {
@@ -1088,49 +1160,7 @@ en_result_t CLK_GetClockFreq(stc_clock_freq_t *pstcClockFreq)
     else
     {
         /* Get system clock. */
-        switch(READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW))
-        {
-            case CLK_SYSCLK_SRC_HRC:
-                /* Hrc used as system clock. */
-                pstcClockFreq->u32SysclkFreq = HRC_VALUE;
-                break;
-            case CLK_SYSCLK_SRC_MRC:
-                /* Mrc used as system clock. */
-                pstcClockFreq->u32SysclkFreq = MRC_VALUE;
-                break;
-            case CLK_SYSCLK_SRC_LRC:
-                /* Lrc used as system clock. */
-                pstcClockFreq->u32SysclkFreq = LRC_VALUE;
-                break;
-            case CLK_SYSCLK_SRC_XTAL:
-                /* Xtal used as system clock. */
-                pstcClockFreq->u32SysclkFreq = XTAL_VALUE;
-                break;
-            default:
-                /* PLL is used as system clock. */
-                pllp = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLP) >> CMU_PLLCFGR_PLLP_POS);
-                plln = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLN) >> CMU_PLLCFGR_PLLN_POS);
-                pllm = (uint32_t)((CM_CMU->PLLCFGR & CMU_PLLCFGR_PLLM) >> CMU_PLLCFGR_PLLM_POS);
-
-                /* fpll = ((pllin / pllm) * plln) / pllp */
-                if (CLK_PLLSRC_XTAL == READ_REG32_BIT(CM_CMU->PLLCFGR, CMU_PLLCFGR_PLLSRC))
-                {
-                    pstcClockFreq->u32SysclkFreq = ((XTAL_VALUE/(pllm + 1UL))*(plln + 1UL))/(pllp + 1UL);
-                }
-                else
-                {
-                    if(0UL == bCM_EFM->HRCCFGR_b.HRCFREQS3)
-                    {
-                        pll_hrc_in = CLK_PLL_SRC_XTAL_FREQ_64M;
-                    }
-                    else
-                    {
-                        pll_hrc_in = CLK_PLL_SRC_XTAL_FREQ_48M;
-                    }
-                    pstcClockFreq->u32SysclkFreq = ((pll_hrc_in/(pllm + 1UL))*(plln + 1UL))/(pllp + 1UL);
-                }
-                break;
-        }
+        pstcClockFreq->u32SysclkFreq = Get_TargetClockFreq(READ_REG8_BIT(CM_CMU->CKSWR, CMU_CKSWR_CKSW));
 
         /* Get hclk. */
         pstcClockFreq->u32HclkFreq = pstcClockFreq->u32SysclkFreq >> \
@@ -1217,7 +1247,7 @@ en_result_t CLK_GetPLLClockFreq(stc_pll_clock_freq_t *pstcPLLClockFreq)
 en_result_t CLK_HrcFreqConfig(uint8_t u8HrcFreq)
 {
     en_result_t enRet = Ok;
-    uint32_t temp;
+    uint8_t temp;
 
     /* Parameters check */
     DDL_ASSERT(IS_CLK_HRC_FREQ_SEL(u8HrcFreq));
@@ -1225,7 +1255,7 @@ en_result_t CLK_HrcFreqConfig(uint8_t u8HrcFreq)
     DDL_ASSERT(READ_REG32(CM_EFM->FAPRT) == 0x00000001UL);
 
     /* When the Hrc is used as PLL source clock in these case Hrc will not be changed */
-    temp = READ_REG32_BIT(CM_CMU->PLLCR, CMU_PLLCR_PLLOFF);
+    temp = READ_REG8_BIT(CM_CMU->PLLCR, CMU_PLLCR_PLLOFF);
     if((CLK_PLLSRC_HRC == READ_REG32_BIT(CM_CMU->PLLCFGR, CMU_PLLCFGR_PLLSRC)) && \
        (CLK_PLL_ON == temp))
     {

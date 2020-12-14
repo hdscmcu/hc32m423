@@ -234,7 +234,6 @@ en_result_t USART_UART_Init(CM_USART_TypeDef *USARTx,
         /* Check parameters */
         DDL_ASSERT(IS_USART_UNIT(USARTx));
         DDL_ASSERT(IS_USART_CLK_MD(pstcUartInit->u32ClockMode));
-        DDL_ASSERT(IS_USART_CLK_DIV(pstcUartInit->u32ClockDiv));
         DDL_ASSERT(IS_USART_PARITY(pstcUartInit->u32Parity));
         DDL_ASSERT(IS_USART_DATA_WIDTH(pstcUartInit->u32DataWidth));
         DDL_ASSERT(IS_USART_STOPBIT(pstcUartInit->u32StopBit));
@@ -244,7 +243,13 @@ en_result_t USART_UART_Init(CM_USART_TypeDef *USARTx,
         DDL_ASSERT(IS_USART_HW_FLOWCTRL(pstcUartInit->u32HWFlowControl));
 
         /* Disbale TX/RX && clear flag */
-        WRITE_REG32(USARTx->CR1, USART_FLAG_CLR_ALL);
+        WRITE_REG32(USARTx->CR1, (USART_FLAG_CLR_ALL << USART_CR1_CPE_POS));
+
+        /* Set CR2 */
+        WRITE_REG32(USARTx->CR2, (pstcUartInit->u32ClockMode | pstcUartInit->u32StopBit));
+
+        /* Set CR3 */
+        WRITE_REG32(USARTx->CR3, pstcUartInit->u32HWFlowControl);
 
         /* Set CR1 */
         WRITE_REG32(USARTx->CR1, (pstcUartInit->u32Parity | \
@@ -252,12 +257,6 @@ en_result_t USART_UART_Init(CM_USART_TypeDef *USARTx,
                                   pstcUartInit->u32OverSampleBit | \
                                   pstcUartInit->u32FirstBit | \
                                   pstcUartInit->u32StartBitPolarity));
-
-        /* Set CR2 */
-        WRITE_REG32(USARTx->CR2, (pstcUartInit->u32ClockMode | pstcUartInit->u32StopBit));
-
-        /* Set CR3 */
-        WRITE_REG32(USARTx->CR3, pstcUartInit->u32HWFlowControl);
 
         if (USART_EXTCLK != pstcUartInit->u32ClockMode)
         {
@@ -360,7 +359,6 @@ en_result_t USART_MultiProcessor_Init(CM_USART_TypeDef *USARTx,
         /* Check parameters */
         DDL_ASSERT(IS_USART_UNIT(USARTx));
         DDL_ASSERT(IS_USART_CLK_MD(pstcMultiProcessorInit->u32ClockMode));
-        DDL_ASSERT(IS_USART_CLK_DIV(pstcMultiProcessorInit->u32ClockDiv));
         DDL_ASSERT(IS_USART_DATA_WIDTH(pstcMultiProcessorInit->u32DataWidth));
         DDL_ASSERT(IS_USART_STOPBIT(pstcMultiProcessorInit->u32StopBit));
         DDL_ASSERT(IS_USART_OVER_SAMPLE_BIT(pstcMultiProcessorInit->u32OverSampleBit));
@@ -369,13 +367,7 @@ en_result_t USART_MultiProcessor_Init(CM_USART_TypeDef *USARTx,
         DDL_ASSERT(IS_USART_HW_FLOWCTRL(pstcMultiProcessorInit->u32HWFlowControl));
 
         /* Disbale TX/RX && clear flag */
-        WRITE_REG32(USARTx->CR1, USART_FLAG_CLR_ALL);
-
-        /* Set CR1 */
-        WRITE_REG32(USARTx->CR1, (pstcMultiProcessorInit->u32DataWidth | \
-                                  pstcMultiProcessorInit->u32OverSampleBit | \
-                                  pstcMultiProcessorInit->u32FirstBit | \
-                                  pstcMultiProcessorInit->u32StartBitPolarity));
+        WRITE_REG32(USARTx->CR1, (USART_FLAG_CLR_ALL << USART_CR1_CPE_POS));
 
         /* Set CR2 */
         WRITE_REG32(USARTx->CR2, (USART_CR2_MPE | \
@@ -384,6 +376,12 @@ en_result_t USART_MultiProcessor_Init(CM_USART_TypeDef *USARTx,
 
         /* Set CR3 */
         WRITE_REG32(USARTx->CR3, pstcMultiProcessorInit->u32HWFlowControl);
+
+        /* Set CR1 */
+        WRITE_REG32(USARTx->CR1, (pstcMultiProcessorInit->u32DataWidth | \
+                                  pstcMultiProcessorInit->u32OverSampleBit | \
+                                  pstcMultiProcessorInit->u32FirstBit | \
+                                  pstcMultiProcessorInit->u32StartBitPolarity));
 
         if (USART_EXTCLK != pstcMultiProcessorInit->u32ClockMode)
         {
@@ -457,23 +455,22 @@ en_result_t USART_ClockSync_Init(CM_USART_TypeDef *USARTx,
         /* Check parameters */
         DDL_ASSERT(IS_USART_UNIT(USARTx));
         DDL_ASSERT(IS_USART_CLKSYNC_CLK_MD(pstcClockSyncInit->u32ClockMode));
-        DDL_ASSERT(IS_USART_CLK_DIV(pstcClockSyncInit->u32ClockDiv));
         DDL_ASSERT(IS_USART_FIRST_BIT(pstcClockSyncInit->u32FirstBit));
         DDL_ASSERT(IS_USART_HW_FLOWCTRL(pstcClockSyncInit->u32HWFlowControl));
 
         /* Disbale TX/RX && clear flag */
-        WRITE_REG32(USARTx->CR1, USART_FLAG_CLR_ALL);
-
-        /* Set CR1 */
-        WRITE_REG32(USARTx->CR1, (USART_CR1_MS | \
-                                  pstcClockSyncInit->u32FirstBit | \
-                                  USART_CR1_SBS));
+        WRITE_REG32(USARTx->CR1, (USART_FLAG_CLR_ALL << USART_CR1_CPE_POS));
 
         /* Set CR2 */
         WRITE_REG32(USARTx->CR2, pstcClockSyncInit->u32ClockMode);
 
         /* Set CR3 */
         WRITE_REG32(USARTx->CR3, pstcClockSyncInit->u32HWFlowControl);
+
+        /* Set CR1 */
+        WRITE_REG32(USARTx->CR1, (USART_CR1_MS | \
+                                  pstcClockSyncInit->u32FirstBit | \
+                                  USART_CR1_SBS));
 
         if (USART_EXTCLK != pstcClockSyncInit->u32ClockMode)
         {
@@ -535,7 +532,7 @@ void USART_DeInit(CM_USART_TypeDef *USARTx)
     DDL_ASSERT(IS_USART_UNIT(USARTx));
 
     /* Configures the registers to reset value. */
-    WRITE_REG32(USARTx->CR1, USART_FLAG_CLR_ALL);
+    WRITE_REG32(USARTx->CR1, (USART_FLAG_CLR_ALL << USART_CR1_CPE_POS));
     WRITE_REG32(USARTx->PR, 0x00000000UL);
     WRITE_REG32(USARTx->BRR, 0x0000FF00UL);
     WRITE_REG32(USARTx->CR1, 0x80000000UL);

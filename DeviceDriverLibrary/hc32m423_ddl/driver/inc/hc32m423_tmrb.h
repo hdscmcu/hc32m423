@@ -134,8 +134,14 @@ typedef struct
 #define TMRB_FLAG_CMP4                      (TMRB_STFLR_CMPF4)
 #define TMRB_FLAG_CMP5                      (TMRB_STFLR_CMPF5)
 #define TMRB_FLAG_CMP6                      (TMRB_STFLR_CMPF6)
-#define TMRB_FLAG_ALL                       (TMRB_CNT_FLAG_MASK |              \
-                                             TMRB_CMP_FLAG_MASK)
+#define TMRB_FLAG_ALL                       (TMRB_FLAG_OVF  |                  \
+                                             TMRB_FLAG_OVF  |                  \
+                                             TMRB_FLAG_CMP1 |                  \
+                                             TMRB_FLAG_CMP2 |                  \
+                                             TMRB_FLAG_CMP3 |                  \
+                                             TMRB_FLAG_CMP4 |                  \
+                                             TMRB_FLAG_CMP5 |                  \
+                                             TMRB_FLAG_CMP6)
 /**
  * @}
  */
@@ -152,8 +158,14 @@ typedef struct
 #define TMRB_INT_CMP4                       (TMRB_ICONR_ITEN4)
 #define TMRB_INT_CMP5                       (TMRB_ICONR_ITEN5)
 #define TMRB_INT_CMP6                       (TMRB_ICONR_ITEN6)
-#define TMRB_INT_ALL                        (TMRB_CNT_INT_MASK |               \
-                                             TMRB_CMP_INT_MASK)
+#define TMRB_INT_ALL                        (TMRB_INT_OVF  |                   \
+                                             TMRB_INT_UDF  |                   \
+                                             TMRB_INT_CMP1 |                   \
+                                             TMRB_INT_CMP2 |                   \
+                                             TMRB_INT_CMP3 |                   \
+                                             TMRB_INT_CMP4 |                   \
+                                             TMRB_INT_CMP5 |                   \
+                                             TMRB_INT_CMP6)
 /**
  * @}
  */
@@ -425,8 +437,6 @@ void TMRB_MxEventCmd(CM_TMRB_TypeDef *TMRBx,
 void TMRB_SetFunc(CM_TMRB_TypeDef *TMRBx, uint32_t u32Ch, uint16_t u16Func);
 void TMRB_ReloadCmd(CM_TMRB_TypeDef *TMRBx,
                         en_functional_state_t enNewState);
-void TMRB_SetTriggerSrc(const CM_TMRB_TypeDef *TMRBx,
-                        en_event_src_t enEventSrc);
 void TMRB_HWStartCondCmd(CM_TMRB_TypeDef *TMRBx,
                                 uint16_t u16Cond,
                                 en_functional_state_t enNewState);
@@ -458,6 +468,7 @@ void TMRB_CompareBufCmd(CM_TMRB_TypeDef *TMRBx,
  void TMRB_SetCompareBufCond(CM_TMRB_TypeDef *TMRBx,
                                     uint32_t u32Ch,
                                     uint16_t u16BufCond);
+void TMRB_SetTriggerSrc(en_event_src_t enEventSrc);
 
 /**
  * @addtogroup TMRB_PWM_Global_Functions

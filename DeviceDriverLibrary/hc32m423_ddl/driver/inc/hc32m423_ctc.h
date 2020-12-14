@@ -58,8 +58,6 @@ extern "C"
  */
 typedef struct
 {
-    uint32_t  u32HrcFreq;               /*!< HCR clock frequency
-                                             This parameter can be a value of @ref CTC_Trim_HRC_Frequency */
     uint32_t  u32RefClockFreq;          /*!< Reference clock frequency
                                              This parameter should refer user manual recommended values */
     uint32_t  u32RefClockSrc;           /*!< Reference clock source selection
@@ -131,27 +129,6 @@ typedef struct
 #define CTC_REF_CLK_DIV1024                 (5UL)   /*!< REFCLK/1024 */
 #define CTC_REF_CLK_DIV2048                 (6UL)   /*!< REFCLK/2048 */
 #define CTC_REF_CLK_DIV4096                 (7UL)   /*!< REFCLK/4096 */
-/**
- * @}
- */
-
-/**
- * @defgroup CTC_Trim_HRC_Frequency CTC Trim HRC frequency
- * @{
- */
-#define CTC_TRIM_HRC_2M                     (2000000UL)   /*!< CTC Trimming 2MHz */
-#define CTC_TRIM_HRC_4M                     (4000000UL)   /*!< CTC Trimming 4MHz */
-#define CTC_TRIM_HRC_8M                     (8000000UL)   /*!< CTC Trimming 8MHz */
-#define CTC_TRIM_HRC_16M                    (16000000UL)  /*!< CTC Trimming 16MHz */
-#define CTC_TRIM_HRC_32M                    (32000000UL)  /*!< CTC Trimming 32MHz */
-#define CTC_TRIM_HRC_64M                    (64000000UL)  /*!< CTC Trimming 64MHz */
-
-#define CTC_TRIM_HRC_1P5M                   (1500000UL)   /*!< CTC Trimming 1.5MHz */
-#define CTC_TRIM_HRC_3M                     (3000000UL)   /*!< CTC Trimming 3MHz */
-#define CTC_TRIM_HRC_6M                     (6000000UL)   /*!< CTC Trimming 6MHz */
-#define CTC_TRIM_HRC_12M                    (12000000UL)  /*!< CTC Trimming 12MHz */
-#define CTC_TRIM_HRC_24M                    (24000000UL)  /*!< CTC Trimming 24MHz */
-#define CTC_TRIM_HRC_48M                    (48000000UL)  /*!< CTC Trimming 48MHz */
 /**
  * @}
  */

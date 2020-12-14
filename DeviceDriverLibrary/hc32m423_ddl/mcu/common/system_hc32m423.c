@@ -55,7 +55,7 @@
 __NO_INIT uint32_t SystemCoreClock;
 /*!< High speed RC frequency (HCR clock) */
 __NO_INIT uint32_t HRC_VALUE;
-
+/*!< High speed RC frequency table */
 const uint32_t au32HrcFreqTable[8] = {HRC_64MHz_VALUE,
                                      HRC_32MHz_VALUE,
                                      HRC_16MHz_VALUE,

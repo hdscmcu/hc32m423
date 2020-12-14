@@ -338,7 +338,7 @@ void PWC_LowSpeedToHighSpeed(void)
  */
 void PWC_ClockLDOCmd(uint16_t u16ClockLDO, en_functional_state_t enNewState)
 {
-    uint32_t u32Timeout = 0UL;
+    __IO uint32_t u32Timeout = 0UL;
     uint16_t u16ReadFlag;
     DDL_ASSERT(IS_PWC_LDO_SEL(u16ClockLDO));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
@@ -413,8 +413,8 @@ void PWC_DynamicVoltageCmd(en_functional_state_t enNewState)
 /**
  * @brief  PWC power monitor command.
  * @param  [in] enNewState
- *    @arg Enable:              High driver voltage enable.
- *    @arg Disable:             High driver voltage disable.
+ *    @arg Enable:              Power monitor enable.
+ *    @arg Disable:             Power monitor disable.
  * @retval None
  * @note   This monitor power is used for ADC and output to REGC pin.
  */

@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -45,19 +46,26 @@ typedef enum
     Mode_Rev = 1U,
 }stc_i2c_com_mode_t;
 
+/**
+ * @brief I2c communication status enum
+ */
+typedef enum
+{
+    I2C_ComBusy = 0u,
+    I2C_ComIdle = 1u,
+}stc_i2c_com_status_t;
 
 /**
  * @brief I2c communication structure
  */
 typedef struct
 {
-    stc_i2c_com_mode_t  enMode;         /*!< I2C communication mode*/
-    uint32_t            u32Length;      /*!< I2C communication data length*/
-    uint8_t*            pBuf;           /*!< I2C communication data buffer pointer*/
-    uint32_t            u32DataIndex;   /*!< I2C communication data transfer index*/
-    __IO uint8_t        u8FinishFlag;   /*!< I2C communication status*/
+    stc_i2c_com_mode_t    enMode;         /*!< I2C communication mode*/
+    uint32_t              u32Length;      /*!< I2C communication data length*/
+    uint8_t*              pBuf;           /*!< I2C communication data buffer pointer*/
+    __IO uint32_t         u32DataIndex;   /*!< I2C communication data transfer index*/
+    stc_i2c_com_status_t  enComStatus;    /*!< I2C communication status*/
 }stc_i2c_communication_t;
-
 
 /*******************************************************************************
  * Local pre-processor symbols/macros ('#define')
@@ -71,17 +79,15 @@ typedef struct
 #define I2C_SCL_PIN                     (GPIO_PIN_5)
 #define I2C_SDA_PORT                    (GPIO_PORT_7)
 #define I2C_SDA_PIN                     (GPIO_PIN_6)
+#define I2C_GPIO_FUNC                   (GPIO_FUNC_7_I2C)
 
 #define KEY1_PORT                       (GPIO_PORT_0)
 #define KEY1_PIN                        (GPIO_PIN_2)
 
 #define TIMEOUT                         (0x10000UL)
 
-#define ADDRESS_W                       (0x00U)
-#define ADDRESS_R                       (0x01U)
-
 /* Define Write and read data length for the example */
-#define TEST_DATA_LEN                   (128U)
+#define TEST_DATA_LEN                   (256U)
 /* Define i2c baudrate */
 #define I2C_BAUDRATE                    (400000UL)
 
@@ -144,48 +150,65 @@ static void WaitKeyShortPress(void)
 
 /**
  * @brief  Master send data kick start via interrupt .
- * @param  [in] u32Len    Data length
- * @param  [in] au8Buf[]  Data buffer pointer
- * @retval None
+ * @param  au8Data               Data array
+ * @param  u32Size               Data size
+ * @retval en_result_t           Enumeration value:
+ *         @arg Ok:                    Success
+ *         @arg OperationInProgress:   Busy
  */
-static void MasterSendData(uint32_t u32Len, uint8_t au8Buf[])
+static en_result_t I2C_Master_Transmit_IT(uint8_t au8Data[], uint32_t u32Size)
 {
-    stcI2cCom.u32DataIndex = 0U;
-    stcI2cCom.u8FinishFlag = 0U;
-    stcI2cCom.enMode = Mode_Send;
-    stcI2cCom.u32Length = u32Len;
-    stcI2cCom.pBuf = au8Buf;
+    en_result_t enRet = Ok;
 
-    /* General start condition */
-    Master_Start();
+    if(I2C_ComIdle == stcI2cCom.enComStatus)
+    {
+        stcI2cCom.enComStatus = I2C_ComBusy;
+
+        stcI2cCom.u32DataIndex = 0U;
+        stcI2cCom.enMode = Mode_Send;
+        stcI2cCom.u32Length = u32Size;
+        stcI2cCom.pBuf = au8Data;
+
+        /* General start condition */
+        Master_Start();
+    }
+    else
+    {
+        enRet = OperationInProgress;
+    }
+
+    return enRet;
 }
 
 /**
  * @brief  Master Rev data kick start via interrupt .
- * @param  [in] u32Len  Data length
- * @param  [in] au8Buf  Data buffer pointer
- * @retval None
+ * @param  au8Data               Data array
+ * @param  u32Size               Data size
+ * @retval en_result_t           Enumeration value:
+ *         @arg Ok:                    Success
+ *         @arg OperationInProgress:   Busy
  */
-static void MasterRevData(uint32_t u32Len, uint8_t au8Buf[])
+static en_result_t I2C_Master_Receive_IT(uint8_t au8Data[], uint32_t u32Size)
 {
-    stcI2cCom.u32DataIndex = 0U;
-    stcI2cCom.u8FinishFlag = 0U;
-    stcI2cCom.enMode = Mode_Rev;
-    stcI2cCom.u32Length = u32Len;
-    stcI2cCom.pBuf = au8Buf;
+    en_result_t enRet = Ok;
 
-    /* General start condition */
-    Master_Start();
-}
+    if(I2C_ComIdle == stcI2cCom.enComStatus)
+    {
+        stcI2cCom.enComStatus = I2C_ComBusy;
+        stcI2cCom.u32DataIndex = 0U;
+        stcI2cCom.enMode = Mode_Rev;
+        stcI2cCom.u32Length = u32Size;
+        stcI2cCom.pBuf = au8Data;
 
-/**
- * @brief  Master communication status read.
- * @param  None
- * @retval uint8_t  If return 1 indicate communication finished.
- */
-static uint8_t GetComStatus(void)
-{
-    return stcI2cCom.u8FinishFlag;
+        /* General start condition */
+        Master_Start();
+    }
+    else
+    {
+        enRet = OperationInProgress;
+    }
+
+    return enRet;
 }
 
 /**
@@ -203,6 +226,8 @@ static en_result_t Master_Initialize(void)
 
     I2C_DeInit(I2C_UNIT);
 
+    stcI2cCom.enComStatus = I2C_ComIdle;
+
     (void)I2C_StructInit(&stcI2cInit);
     stcI2cInit.u32Baudrate = I2C_BAUDRATE;
     stcI2cInit.u32ClockDiv = I2C_CLK_DIV4;
@@ -210,13 +235,6 @@ static en_result_t Master_Initialize(void)
     enRet = I2C_Init(I2C_UNIT, &stcI2cInit, &fErr);
     if(Ok == enRet)
     {
-        /* Set slave address*/
-        #ifdef I2C_10BITS_ADDRESS
-        I2C_SlaveAddrConfig(I2C_UNIT, I2C_ADDR0, I2C_ADDR_10BIT, DEVICE_ADDR);
-        #else
-        I2C_SlaveAddrConfig(I2C_UNIT, I2C_ADDR0, I2C_ADDR_7BIT, DEVICE_ADDR);
-        #endif
-
         /*NVIC configuration for interrupt */
         NVIC_ClearPendingIRQ(I2C_MASTER_RXI_IRQn);
         NVIC_SetPriority(I2C_MASTER_RXI_IRQn, DDL_IRQ_PRI03);
@@ -234,11 +252,7 @@ static en_result_t Master_Initialize(void)
         NVIC_SetPriority(I2C_MASTER_EEI_IRQn, DDL_IRQ_PRI03);
         NVIC_EnableIRQ(I2C_MASTER_EEI_IRQn);
 
-        /* I2C function command */
-        I2C_Cmd(I2C_UNIT, Enable);
-
-        /* Config startf and slave address match interrupt function*/
-        I2C_IntCmd(I2C_UNIT, I2C_INT_START | I2C_INT_MATCH_ADDR0, Enable);
+        I2C_BusWaitCmd(I2C_UNIT, Enable);
     }
     return enRet;
 }
@@ -250,20 +264,27 @@ static en_result_t Master_Initialize(void)
  */
 static void Master_Start(void)
 {
-    //return I2C_Start(I2C_UNIT,TIMEOUT);
+    /* I2C function command */
+    I2C_Cmd(I2C_UNIT, Enable);
+    /* Config startf and slave address match interrupt function*/
+    I2C_IntCmd(I2C_UNIT, I2C_INT_START | I2C_INT_MATCH_ADDR0, Enable);
+
+    I2C_SWResetCmd(I2C_UNIT, Enable);
+    I2C_SWResetCmd(I2C_UNIT, Disable);
+    /* generate start signal */
     I2C_GenerateStart(I2C_UNIT);
 }
 
 /**
  * @brief   Send slave address
- * @param   [in]  u8Addr            The slave address
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Success
- *         @arg ErrorTimeout:       Time out
+ * @param   [in]  u8Addr     The slave address
+ * @param   [in]  u8Dir      Can be I2C_DIR_TX or I2C_DIR_RX
+ * @retval None
  */
-static en_result_t Master_SendAddr(uint8_t u8Addr)
+static void Master_SendAddr(uint8_t u8Addr, uint8_t u8Dir)
 {
-    return I2C_AddrTrans(I2C_UNIT, u8Addr, TIMEOUT);
+    /* Send I2C address */
+    I2C_WriteData(I2C_UNIT, (u8Addr << 1u) | u8Dir);
 }
 
 /**
@@ -276,67 +297,53 @@ void I2C_Error_IrqHandler(void)
     /* If starf flag valid */
     if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_START))
     {
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_START);
+        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_START | I2C_FLAG_NACKF);
+        I2C_IntCmd(I2C_UNIT, I2C_INT_STOP | I2C_INT_NACK, Enable);
+
         if(Mode_Send == stcI2cCom.enMode)
         {
-            (void)Master_SendAddr(((uint8_t)DEVICE_ADDR<<1U) | ADDRESS_W);
+            /* Enable TEI interrupt which indicate address transfer end */
+            I2C_IntCmd(I2C_UNIT, I2C_FLAG_TX_CPLT, Enable);
+
+            Master_SendAddr(DEVICE_ADDR, I2C_DIR_TX);
         }
         else
         {
-            (void)Master_SendAddr(((uint8_t)DEVICE_ADDR<<1U) | ADDRESS_R);
-        }
-    }
+            /* if read data length is 1 */
+            if(stcI2cCom.u32Length == 1U)
+            {
+                I2C_AckConfig(I2C_UNIT, I2C_NACK);
+            }
 
-    /* If address flag valid */
-    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0))
-    {
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0);
-        /* Enable Tx or Rx function*/
-        if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TX))
-        {
-            /* Config tx buffer empty interrupt function*/
-            I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY, Enable);
-            /* Write the first data to DTR immediately */
-            I2C_WriteData(I2C_UNIT, BufRead(stcI2cCom.pBuf));
-        }
-        else
-        {
-            /* Config rx buffer full interrupt function*/
-            I2C_IntCmd(I2C_UNIT, I2C_INT_RX_FULL, Enable);
-        }
+            /* Enable RXI interrupt which indicate data receive buffer full */
+            I2C_IntCmd(I2C_UNIT, I2C_FLAG_RX_FULL, Enable);
 
-        /* Enable NACK interrupt */
-        I2C_IntCmd(I2C_UNIT, I2C_INT_STOP | I2C_INT_NACK, Enable);
+            Master_SendAddr(DEVICE_ADDR, I2C_DIR_RX);
+        }
     }
 
     /* If NACK interrupt occurred */
-    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_ACK))
+    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_ACKR))
     {
         /* clear NACK flag*/
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_NACK);
-        /* Stop tx or rx process*/
-        if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TX))
-        {
-            /* Config tx buffer empty interrupt function disable*/
-            I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY, Disable);
+        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_NACKF);
 
-            /* Read DRR register to release SCL*/
-            (void)I2C_ReadData(I2C_UNIT);
-        }
-        else
-        {
-            /* Config rx buffer full interrupt function disable */
-            I2C_IntCmd(I2C_UNIT, I2C_INT_RX_FULL, Disable);
-        }
+        /* Stop tx or rx process*/
+        I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY | I2C_INT_RX_FULL | I2C_INT_TX_CPLT | I2C_INT_NACK, Disable);
+
+        /* Generate stop condition */
+        I2C_GenerateStop(I2C_UNIT);
     }
 
     if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_STOP))
     {
-        /* Communication finished */
-        stcI2cCom.u8FinishFlag = 1U;
         /* Disable Stop flag interrupt */
-        I2C_IntCmd(I2C_UNIT, I2C_INT_STOP, Disable);
+        I2C_IntCmd(I2C_UNIT, I2C_INT_STOP | I2C_INT_TX_EMPTY | I2C_INT_RX_FULL | I2C_INT_TX_CPLT | I2C_INT_NACK, Disable);
         I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP);
+        I2C_Cmd(I2C_UNIT, Disable);
+
+        /* Communication finished */
+        stcI2cCom.enComStatus = I2C_ComIdle;
     }
 }
 
@@ -347,17 +354,14 @@ void I2C_Error_IrqHandler(void)
  */
 void I2C_TxEmpty_IrqHandler(void)
 {
-    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TX_EMPTY))
+    if(stcI2cCom.u32DataIndex <= (stcI2cCom.u32Length - 1u))
     {
-        if(stcI2cCom.u32DataIndex < TEST_DATA_LEN)
-        {
-            I2C_WriteData(I2C_UNIT, BufRead(stcI2cCom.pBuf));
-        }
-        else
-        {
-            I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY, Disable);
-            I2C_IntCmd(I2C_UNIT, I2C_INT_TX_CPLT, Enable);
-        }
+        I2C_WriteData(I2C_UNIT, BufRead(stcI2cCom.pBuf));
+    }
+    else
+    {
+        I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY, Disable);
+        I2C_IntCmd(I2C_UNIT, I2C_INT_TX_CPLT, Enable);
     }
 }
 
@@ -368,21 +372,28 @@ void I2C_TxEmpty_IrqHandler(void)
  */
 void I2C_RxEnd_IrqHandler(void)
 {
-    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_RX_FULL))
+    if(stcI2cCom.u32Length >= 2U)
     {
-        BufWrite(stcI2cCom.pBuf, I2C_ReadData(I2C_UNIT));
+        if(stcI2cCom.u32DataIndex == (stcI2cCom.u32Length - 2U))
+        {
+            I2C_AckConfig(I2C_UNIT, I2C_NACK);
+        }
     }
 
-    if(stcI2cCom.u32DataIndex >= TEST_DATA_LEN)
+    if(stcI2cCom.u32DataIndex == (stcI2cCom.u32Length - 1U))
     {
-        /* Generate stop condition */
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP);
-        I2C_GenerateStop(I2C_UNIT);
         /* Enable Stop flag interrupt */
         I2C_IntCmd(I2C_UNIT, I2C_INT_STOP, Enable);
         /* Disable TXI interrupt */
         I2C_IntCmd(I2C_UNIT, I2C_INT_RX_FULL, Disable);
+
+        /* Generate stop condition */
+        I2C_GenerateStop(I2C_UNIT);
+
+        I2C_AckConfig(I2C_UNIT, I2C_ACK);
     }
+
+    BufWrite(stcI2cCom.pBuf, I2C_ReadData(I2C_UNIT));
 }
 
 /**
@@ -392,15 +403,37 @@ void I2C_RxEnd_IrqHandler(void)
  */
 void I2C_TxEnd_IrqHandler(void)
 {
-    if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TX_CPLT))
+    I2C_IntCmd(I2C_UNIT, I2C_INT_TX_CPLT, Disable);
+
+    if(stcI2cCom.u32DataIndex == 0u)
     {
-        /* Generate stop condition */
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP);
-        I2C_GenerateStop(I2C_UNIT);
-        /* Enable Stop flag interrupt */
+        /* Indicate address send finished */
+        if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TRA))
+        {
+            /* If Address send receive ACK */
+            if(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_ACKR))
+            {
+                /* Config tx buffer empty interrupt function*/
+                I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY, Enable);
+                /* Need transfer first data here */
+                I2C_WriteData(I2C_UNIT, BufRead(stcI2cCom.pBuf));
+            }
+            else
+            {
+                I2C_IntCmd(I2C_UNIT, I2C_INT_NACK, Disable);
+                /* Generate stop if receive NACK */
+                I2C_IntCmd(I2C_UNIT, I2C_INT_STOP, Enable);
+                /* Generate stop condition */
+                I2C_GenerateStop(I2C_UNIT);
+            }
+        }
+    }
+    else
+    {
+        /* Data Send finish */
         I2C_IntCmd(I2C_UNIT, I2C_INT_STOP, Enable);
-        /* Disable TXI interrupt */
-        I2C_IntCmd(I2C_UNIT, I2C_INT_TX_EMPTY|I2C_INT_TX_CPLT, Disable);
+        /* Generate stop condition */
+        I2C_GenerateStop(I2C_UNIT);
     }
 }
 
@@ -497,7 +530,7 @@ int32_t main(void)
     /* Test buffer initialize */
     for(i=0U; i<TEST_DATA_LEN; i++)
     {
-        u8TxBuf[i] = (uint8_t)i+1U;
+        u8TxBuf[i] = (uint8_t)i;
     }
     for(i=0U; i<TEST_DATA_LEN; i++)
     {
@@ -505,8 +538,8 @@ int32_t main(void)
     }
 
     /* Initialize I2C port*/
-    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, GPIO_FUNC_7_I2C);
-    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, GPIO_FUNC_7_I2C);
+    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, I2C_GPIO_FUNC);
+    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, I2C_GPIO_FUNC);
 
     /* Enable I2C Peripheral*/
     CLK_FcgPeriphClockCmd(CLK_FCG_IIC, Enable);
@@ -528,17 +561,18 @@ int32_t main(void)
     WaitKeyShortPress();
 
     /* I2C master data write */
-    MasterSendData(TEST_DATA_LEN, u8TxBuf);
+    while(Ok != I2C_Master_Transmit_IT(u8TxBuf, TEST_DATA_LEN))
+    {
+        ;
+    }
 
-    i = 0UL;
     /* Wait communicaiton finished*/
-    while(0U == GetComStatus())
+    while(I2C_ComBusy == stcI2cCom.enComStatus)
     {
         if(TIMEOUT == i)
         {
             /* Communication time out*/
-            BSP_LED_On(LED_RED);
-            Peripheral_WP();
+            BSP_LED_Toggle(LED_RED);
             for(;;)
             {
                 ;
@@ -550,17 +584,19 @@ int32_t main(void)
     /* 5mS delay for device*/
     DDL_DelayMS(1U);
 
-    MasterRevData(TEST_DATA_LEN, u8RxBuf);
+    while(Ok != I2C_Master_Receive_IT(u8RxBuf, TEST_DATA_LEN))
+    {
+        ;
+    }
 
     i = 0UL;
     /* Wait communicaiton finished*/
-    while(0U == GetComStatus())
+    while(I2C_ComBusy == stcI2cCom.enComStatus)
     {
         if(TIMEOUT == i)
         {
             /* Communication time out*/
-            BSP_LED_On(LED_RED);
-            Peripheral_WP();
+            BSP_LED_Toggle(LED_RED);
             for(;;)
             {
                 ;

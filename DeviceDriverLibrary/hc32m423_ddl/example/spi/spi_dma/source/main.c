@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Refined this example.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -44,89 +45,91 @@
  * SPI unit instance for this example.
  * 'SPI_UNIT' can only be defined as CM_SPI.
  */
-#define SPI_UNIT                    (CM_SPI)
-#define SPI_PERIPH_CLK              (CLK_FCG_SPI)
+#define SPI_UNIT                        (CM_SPI)
+#define SPI_PERIPH_CLK                  (CLK_FCG_SPI)
 
 /* SPI pin definition. */
-#define SPI_NSS_PORT                (GPIO_PORT_D)
-#define SPI_NSS_PIN                 (GPIO_PIN_6)
-#define SPI_SCK_PORT                (GPIO_PORT_D)
-#define SPI_SCK_PIN                 (GPIO_PIN_4)
-#define SPI_MOSI_PORT               (GPIO_PORT_D)
-#define SPI_MOSI_PIN                (GPIO_PIN_3)
-#define SPI_MISO_PORT               (GPIO_PORT_D)
-#define SPI_MISO_PIN                (GPIO_PIN_5)
+#define SPI_NSS_PORT                    (GPIO_PORT_D)
+#define SPI_NSS_PIN                     (GPIO_PIN_6)
+#define SPI_SCK_PORT                    (GPIO_PORT_D)
+#define SPI_SCK_PIN                     (GPIO_PIN_4)
+#define SPI_MOSI_PORT                   (GPIO_PORT_D)
+#define SPI_MOSI_PIN                    (GPIO_PIN_3)
+#define SPI_MISO_PORT                   (GPIO_PORT_D)
+#define SPI_MISO_PIN                    (GPIO_PIN_5)
 
 /* SPI wire mode definition. @ref SPI_Wire_Mode */
-#define SPI_WIRE_MD                 (SPI_4WIRE)
+#define SPI_WIRE_MD                     (SPI_4WIRE)
 
 /*
  * SPI standard mode. @ref SPI_Standard_Mode
  * NOTE: Only SPI_MD1 and SPI_MD3 can be used in 3-wire slave mode.
  */
-#define SPI_MD                      (SPI_MD1)
+#define SPI_MD                          (SPI_MD1)
 
 /* SPI transmission mode. @ref SPI_Trans_Mode */
-#define SPI_TRANS_MD                (SPI_FULL_DUPLEX)
+#define SPI_TRANS_MD                    (SPI_FULL_DUPLEX)
 
 /*
  * SPI baud rate divider. @ref SPI_Clock_Divider
  * NOTE! The maximum transmission baud rate of the slave is PCLK/6. \
      Master baud rate depends on slave PCLK frequency.
  */
-#define SPI_CLK_DIV                 (SPI_CLK_DIV8)
+#define SPI_CLK_DIV                     (SPI_CLK_DIV8)
 
 /* SPI NSS pin active level. @ref SPI_NSS_Active_Level */
-#define SPI_NSS_ACTIVE_LEVEL        (SPI_NSS_ACTIVE_LOW)
+#define SPI_NSS_ACTIVE_LEVEL            (SPI_NSS_ACTIVE_LOW)
 
 /* SPI data buffer size definition. */
-#define SPI_BUF_LEN                 (8UL)
-#define SPI_IDLE_TIME               (400U)              /* Customer definition. */
+#define SPI_BUF_LEN                     (8UL)
+#define SPI_IDLE_TIME                   (4000U)             /* Customer definition. */
 
 /* Command from master. */
-#define SPI_CMD_WR_SLAVE            (0x51U)             /* Customer definition. */
-#define SPI_CMD_RD_SLAVE            (0x56U)             /* Customer definition. */
-#define SPI_DUMMY_DATA              (0xFFU)
+#define SPI_CMD_WR_SLAVE                (0x51U)             /* Customer definition. */
+#define SPI_CMD_RD_SLAVE                (0x56U)             /* Customer definition. */
+#define SPI_DUMMY_DATA                  (0xFFU)
 
 /* SPI DMA definition. */
-#define SPI_DMA_UNIT                (CM_DMA)
-#define SPI_DMA_PERIPH_CLK           (CLK_FCG_DMA)
+#define SPI_DMA_UNIT                    (CM_DMA)
+#define SPI_DMA_PERIPH_CLK              (CLK_FCG_DMA)
 
-#define SPI_DMA_DATA_WIDTH          (DMA_DATA_WIDTH_8BIT)
+#define SPI_DMA_DATA_WIDTH              (DMA_DATA_WIDTH_8BIT)
 
-#define SPI_DMA_RX_BLOCK_SIZE       (1UL)
-#define SPI_DMA_RX_TRANS_CNT        (SPI_BUF_LEN)
-#define SPI_DMA_RX_CH               (DMA_CH0)
-#define SPI_DMA_RX_TRIG_SRC         (EVT_SPI_SPRI)
-#define SPI_DMA_RX_SRC_ADDR         ((uint32_t)(&SPI_UNIT->DR))
-#define SPI_DMA_RX_DEST_ADDR        ((uint32_t)(&m_au8SpiRxBuf[0U]))
-#define SPI_DMA_RX_DEST_ADDR_MD     (DMA_DEST_ADDR_MD_INC)
-#define SPI_DMA_RX_SRC_ADDR_MD      (DMA_SRC_ADDR_MD_FIX)
-#define SPI_DMA_RX_LLP_MD           (DMA_LLP_WAIT)
-#define SPI_DMA_RX_LLP_POS          (DMA_CH0CTL0_LLP_POS - 4U)
-#define SPI_DMA_RX_INT              (DMA_INT_TC0)
-#define SPI_DMA_RX_IRQn             (DMA_TC0_IRQn)
-#define SPI_DMA_RX_INT_PRIO         (DDL_IRQ_PRI03)
-#define SPI_DMA_RX_FLAG             (DMA_INT_TC0)
-#define SPI_DMA_RX_IRQ_HANDLER      (DMA_TC0_IrqHandler)
+#define SPI_RX_DMA_BLOCK_SIZE           (1UL)
+#define SPI_RX_DMA_TRANS_CNT            (SPI_BUF_LEN)
+#define SPI_RX_DMA_CH                   (DMA_CH0)
+#define SPI_RX_DMA_TRIG_SRC             (EVT_SPI_SPRI)
+#define SPI_RX_DMA_SRC_ADDR             ((uint32_t)(&SPI_UNIT->DR))
+#define SPI_RX_DMA_DEST_ADDR            ((uint32_t)(&m_au8SpiRxBuf[0U]))
+#define SPI_RX_DMA_DEST_ADDR_MD         (DMA_DEST_ADDR_MD_INC)
+#define SPI_RX_DMA_SRC_ADDR_MD          (DMA_SRC_ADDR_MD_FIX)
+#define SPI_RX_DMA_LLP_MD               (DMA_LLP_WAIT)
+#define SPI_RX_DMA_LLP_POS              (DMA_CH0CTL0_LLP_POS - 4U)
+#define SPI_RX_DMA_LLP_ADDR_MD          (DMA_LLP_ADDR_RAM)
+#define SPI_RX_DMA_INT_TYPE             (DMA_INT_TC0)
+#define SPI_RX_DMA_IRQn                 (DMA_TC0_IRQn)
+#define SPI_RX_DMA_IRQ_PRI              (DDL_IRQ_PRI03)
+#define SPI_RX_DMA_FLAG                 (DMA_INT_TC0)
+#define SPI_RX_DMA_IRQ_HANDLER          (DMA_TC0_IrqHandler)
 
-#define SPI_DMA_TX_BLOCK_SIZE       (1UL)
-#define SPI_DMA_TX_TRANS_CNT        (SPI_BUF_LEN)
-#define SPI_DMA_TX_CH               (DMA_CH1)
-#define SPI_DMA_TX_TRIG_SRC         (EVT_SPI_SPTI)
-#define SPI_DMA_TX_SRC_ADDR         ((uint32_t)(&m_au8SpiTxBuf[0U]))
-#define SPI_DMA_TX_DEST_ADDR        ((uint32_t)(&SPI_UNIT->DR))
-#define SPI_DMA_TX_DEST_ADDR_MD     (DMA_DEST_ADDR_MD_FIX)
-#define SPI_DMA_TX_SRC_ADDR_MD      (DMA_SRC_ADDR_MD_INC)
-#define SPI_DMA_TX_LLP_MD           (DMA_LLP_WAIT)
-#define SPI_DMA_TX_LLP_POS          (DMA_CH1CTL0_LLP_POS - 4U)
-#define SPI_DMA_TX_INT              (DMA_INT_TC1)
-#define SPI_DMA_TX_IRQn             (DMA_TC1_IRQn)
-#define SPI_DMA_TX_INT_PRIO         (DDL_IRQ_PRI04)
-#define SPI_DMA_TX_FLAG             (DMA_INT_TC1)
-#define SPI_DMA_TX_IRQ_HANDLER      (DMA_TC1_IrqHandler)
+#define SPI_TX_DMA_BLOCK_SIZE           (1UL)
+#define SPI_TX_DMA_TRANS_CNT            (SPI_BUF_LEN)
+#define SPI_TX_DMA_CH                   (DMA_CH1)
+#define SPI_TX_DMA_TRIG_SRC             (EVT_SPI_SPTI)
+#define SPI_TX_DMA_SRC_ADDR             ((uint32_t)(&m_au8SpiTxBuf[0U]))
+#define SPI_TX_DMA_DEST_ADDR            ((uint32_t)(&SPI_UNIT->DR))
+#define SPI_TX_DMA_DEST_ADDR_MD         (DMA_DEST_ADDR_MD_FIX)
+#define SPI_TX_DMA_SRC_ADDR_MD          (DMA_SRC_ADDR_MD_INC)
+#define SPI_TX_DMA_LLP_MD               (DMA_LLP_WAIT)
+#define SPI_TX_DMA_LLP_POS              (DMA_CH1CTL0_LLP_POS - 4U)
+#define SPI_TX_DMA_LLP_ADDR_MD          (DMA_LLP_ADDR_RAM)
+#define SPI_TX_DMA_INT_TYPE             (DMA_INT_TC1)
+#define SPI_TX_DMA_IRQn                 (DMA_TC1_IRQn)
+#define SPI_TX_DMA_IRQ_PRI              (DDL_IRQ_PRI04)
+#define SPI_TX_DMA_FLAG                 (DMA_INT_TC1)
+#define SPI_TX_DMA_IRQ_HANDLER          (DMA_TC1_IrqHandler)
 
-#define SPI_DMA_LLP_MASK            (DMA_CH0CTL0_LLP)
+#define SPI_DMA_LLP_MASK                (DMA_CH0CTL0_LLP)
 
 /* Debug printing definition. */
 #if (DDL_PRINT_ENABLE == DDL_ON)
@@ -154,12 +157,10 @@ static void SpiIrqConfig(void);
  * Local variable definitions ('static')
  ******************************************************************************/
 static uint8_t u8RxFlag = 0U;
-/* All of the data is valid. */
 static uint8_t m_au8SpiRxBuf[SPI_BUF_LEN];
-/* Valid data starts at offset 2 and length is SPI_BUF_LEN-2. */
 static uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = \
 {
-    SPI_DUMMY_DATA, SPI_DUMMY_DATA, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60
+    0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80
 };
 
 #if defined (__ICCARM__)
@@ -216,8 +217,9 @@ int32_t main(void)
 
             if (m_au8SpiRxBuf[0U] == SPI_CMD_RD_SLAVE)
             {
-                /* Prepare data that needs to be sent to the master.
-                   Valid data starts at offset 2 and length is SPI_BUF_LEN-2. */
+                /* Prepare data that needs to be sent to the master. */
+                m_au8SpiTxBuf[0U]++;
+                m_au8SpiTxBuf[1U]++;
                 m_au8SpiTxBuf[2U]++;
                 m_au8SpiTxBuf[3U]++;
                 m_au8SpiTxBuf[4U]++;
@@ -232,6 +234,10 @@ int32_t main(void)
                 DBG(" 0x%.2x", m_au8SpiRxBuf[i]);
             }
             DBG("\n");
+
+            SPI_Cmd(SPI_UNIT, Disable);
+            DMA_ChCmd(SPI_DMA_UNIT, SPI_TX_DMA_CH, Enable);
+            SPI_Cmd(SPI_UNIT, Enable);
         }
     }
 }
@@ -281,79 +287,81 @@ static void DmaConfig(void)
     CLK_FcgPeriphClockCmd(SPI_DMA_PERIPH_CLK, Enable);
 
     /* Descriptor RX. This structure variable is used to reload the configuration of the RX channel. */
-    m_stcLlpDescRx.SARx    = SPI_DMA_RX_SRC_ADDR;
-    m_stcLlpDescRx.DARx    = SPI_DMA_RX_DEST_ADDR;
-    m_stcLlpDescRx.CHxCTL0 = SPI_DMA_RX_BLOCK_SIZE | \
-                             (SPI_DMA_RX_TRANS_CNT << DMA_CH0CTL0_CNT_POS) | \
-                             (((uint32_t)&m_stcLlpDescRx << SPI_DMA_RX_LLP_POS) & SPI_DMA_LLP_MASK)| \
+    m_stcLlpDescRx.SARx    = SPI_RX_DMA_SRC_ADDR;
+    m_stcLlpDescRx.DARx    = SPI_RX_DMA_DEST_ADDR;
+    m_stcLlpDescRx.CHxCTL0 = SPI_RX_DMA_BLOCK_SIZE | \
+                             (SPI_RX_DMA_TRANS_CNT << DMA_CH0CTL0_CNT_POS) | \
+                             (((uint32_t)&m_stcLlpDescRx << SPI_RX_DMA_LLP_POS) & SPI_DMA_LLP_MASK)| \
                              DMA_LLP_ENABLE    | \
-                             SPI_DMA_RX_LLP_MD | \
+                             SPI_RX_DMA_LLP_MD | \
                              SPI_DMA_DATA_WIDTH;
-    m_stcLlpDescRx.CHxCTL1 = SPI_DMA_RX_SRC_ADDR_MD  | \
-                             SPI_DMA_RX_DEST_ADDR_MD | \
-                             DMA_LLP_ADDR_RAM;
+    m_stcLlpDescRx.CHxCTL1 = SPI_RX_DMA_SRC_ADDR_MD  | \
+                             SPI_RX_DMA_DEST_ADDR_MD | \
+                             SPI_RX_DMA_LLP_ADDR_MD;
 
     (void)DMA_LlpStructInit(&stcDmaLlpInit);
     stcDmaLlpInit.u32Llp       = DMA_LLP_ENABLE;
-    stcDmaLlpInit.u32LlpMode   = SPI_DMA_RX_LLP_MD;
+    stcDmaLlpInit.u32LlpMode   = SPI_RX_DMA_LLP_MD;
     stcDmaLlpInit.u32LlpAddr   = (uint32_t)&m_stcLlpDescRx;
+    stcDmaLlpInit.u32LlpAddrMode = SPI_RX_DMA_LLP_ADDR_MD;
 
     /* Config DMA */
-    stcDmaInit.u32SrcAddr      = SPI_DMA_RX_SRC_ADDR;
-    stcDmaInit.u32DestAddr     = SPI_DMA_RX_DEST_ADDR;
+    stcDmaInit.u32SrcAddr      = SPI_RX_DMA_SRC_ADDR;
+    stcDmaInit.u32DestAddr     = SPI_RX_DMA_DEST_ADDR;
     stcDmaInit.u32DataWidth    = SPI_DMA_DATA_WIDTH;
-    stcDmaInit.u32BlockSize    = SPI_DMA_RX_BLOCK_SIZE;
-    stcDmaInit.u32TransCount   = SPI_DMA_RX_TRANS_CNT;
-    stcDmaInit.u32SrcAddrMode  = SPI_DMA_RX_SRC_ADDR_MD;
-    stcDmaInit.u32DestAddrMode = SPI_DMA_RX_DEST_ADDR_MD;
+    stcDmaInit.u32BlockSize    = SPI_RX_DMA_BLOCK_SIZE;
+    stcDmaInit.u32TransCount   = SPI_RX_DMA_TRANS_CNT;
+    stcDmaInit.u32SrcAddrMode  = SPI_RX_DMA_SRC_ADDR_MD;
+    stcDmaInit.u32DestAddrMode = SPI_RX_DMA_DEST_ADDR_MD;
 
     CLK_FcgPeriphClockCmd(SPI_DMA_PERIPH_CLK, Enable);
-    (void)DMA_LlpInit(SPI_DMA_UNIT, SPI_DMA_RX_CH, &stcDmaLlpInit);
-    (void)DMA_Init(SPI_DMA_UNIT, SPI_DMA_RX_CH, &stcDmaInit);
+    (void)DMA_LlpInit(SPI_DMA_UNIT, SPI_RX_DMA_CH, &stcDmaLlpInit);
+    (void)DMA_Init(SPI_DMA_UNIT, SPI_RX_DMA_CH, &stcDmaInit);
 
     /* Descriptor TX. This structure variable is used to reload the configuration of the TX channel. */
-    m_stcLlpDescTx.SARx    = SPI_DMA_TX_SRC_ADDR;
-    m_stcLlpDescTx.DARx    = SPI_DMA_TX_DEST_ADDR;
-    m_stcLlpDescTx.CHxCTL0 = SPI_DMA_TX_BLOCK_SIZE | \
-                             (SPI_DMA_TX_TRANS_CNT << DMA_CH1CTL0_CNT_POS) | \
-                             (((uint32_t)&m_stcLlpDescTx << SPI_DMA_TX_LLP_POS) & SPI_DMA_LLP_MASK) | \
+    m_stcLlpDescTx.SARx    = SPI_TX_DMA_SRC_ADDR;
+    m_stcLlpDescTx.DARx    = SPI_TX_DMA_DEST_ADDR;
+    m_stcLlpDescTx.CHxCTL0 = SPI_TX_DMA_BLOCK_SIZE | \
+                             (SPI_TX_DMA_TRANS_CNT << DMA_CH1CTL0_CNT_POS) | \
+                             (((uint32_t)&m_stcLlpDescTx << SPI_TX_DMA_LLP_POS) & SPI_DMA_LLP_MASK) | \
                              DMA_LLP_ENABLE    | \
-                             SPI_DMA_TX_LLP_MD | \
+                             SPI_TX_DMA_LLP_MD | \
                              SPI_DMA_DATA_WIDTH;
-    m_stcLlpDescTx.CHxCTL1 = SPI_DMA_TX_SRC_ADDR_MD  | \
-                             SPI_DMA_TX_DEST_ADDR_MD | \
-                             DMA_LLP_ADDR_RAM;
+    m_stcLlpDescTx.CHxCTL1 = SPI_TX_DMA_SRC_ADDR_MD  | \
+                             SPI_TX_DMA_DEST_ADDR_MD | \
+                             SPI_TX_DMA_LLP_ADDR_MD;
 
     stcDmaLlpInit.u32Llp       = DMA_LLP_ENABLE;
-    stcDmaLlpInit.u32LlpMode   = SPI_DMA_TX_LLP_MD;
+    stcDmaLlpInit.u32LlpMode   = SPI_TX_DMA_LLP_MD;
     stcDmaLlpInit.u32LlpAddr   = (uint32_t)&m_stcLlpDescTx;
+    stcDmaLlpInit.u32LlpAddrMode = SPI_TX_DMA_LLP_ADDR_MD;
 
     /* Config DMA */
-    stcDmaInit.u32SrcAddr      = SPI_DMA_TX_SRC_ADDR;
-    stcDmaInit.u32DestAddr     = SPI_DMA_TX_DEST_ADDR;
+    stcDmaInit.u32SrcAddr      = SPI_TX_DMA_SRC_ADDR;
+    stcDmaInit.u32DestAddr     = SPI_TX_DMA_DEST_ADDR;
     stcDmaInit.u32DataWidth    = SPI_DMA_DATA_WIDTH;
-    stcDmaInit.u32BlockSize    = SPI_DMA_TX_BLOCK_SIZE;
-    stcDmaInit.u32TransCount   = SPI_DMA_TX_TRANS_CNT;
-    stcDmaInit.u32SrcAddrMode  = SPI_DMA_TX_SRC_ADDR_MD;
-    stcDmaInit.u32DestAddrMode = SPI_DMA_TX_DEST_ADDR_MD;
+    stcDmaInit.u32BlockSize    = SPI_TX_DMA_BLOCK_SIZE;
+    stcDmaInit.u32TransCount   = SPI_TX_DMA_TRANS_CNT;
+    stcDmaInit.u32SrcAddrMode  = SPI_TX_DMA_SRC_ADDR_MD;
+    stcDmaInit.u32DestAddrMode = SPI_TX_DMA_DEST_ADDR_MD;
 
-    (void)DMA_LlpInit(SPI_DMA_UNIT, SPI_DMA_TX_CH, &stcDmaLlpInit);
-    (void)DMA_Init(SPI_DMA_UNIT, SPI_DMA_TX_CH, &stcDmaInit);
+    (void)DMA_LlpInit(SPI_DMA_UNIT, SPI_TX_DMA_CH, &stcDmaLlpInit);
+    (void)DMA_Init(SPI_DMA_UNIT, SPI_TX_DMA_CH, &stcDmaInit);
 
     /* Enable AOS clock */
     CLK_FcgPeriphClockCmd(CLK_FCG_AOS, Enable);
 
     /* Set DMA trigger source */
-    DMA_SetTriggerSrc(SPI_DMA_UNIT, SPI_DMA_RX_CH, SPI_DMA_RX_TRIG_SRC);
-    DMA_SetTriggerSrc(SPI_DMA_UNIT, SPI_DMA_TX_CH, SPI_DMA_TX_TRIG_SRC);
+    DMA_SetTriggerSrc(SPI_DMA_UNIT, SPI_RX_DMA_CH, SPI_RX_DMA_TRIG_SRC);
+    DMA_SetTriggerSrc(SPI_DMA_UNIT, SPI_TX_DMA_CH, SPI_TX_DMA_TRIG_SRC);
 
-    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_DMA_RX_FLAG | SPI_DMA_TX_FLAG);
+    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_RX_DMA_FLAG | SPI_TX_DMA_FLAG);
 
     DmaIrqConfig();
 
     /* Enable DMA channel. */
-    DMA_ChCmd(SPI_DMA_UNIT, SPI_DMA_RX_CH, Enable);
-    DMA_ChCmd(SPI_DMA_UNIT, SPI_DMA_TX_CH, Enable);
+    DMA_ChCmd(SPI_DMA_UNIT, SPI_RX_DMA_CH, Enable);
+    DMA_ChCmd(SPI_DMA_UNIT, SPI_TX_DMA_CH, Enable);
 
     /* Enable DMA. */
     DMA_Cmd(SPI_DMA_UNIT, Enable);
@@ -368,32 +376,43 @@ static void DmaIrqConfig(void)
 {
     stc_irq_signin_config_t stcCfg;
 
-    stcCfg.enIRQn = SPI_DMA_RX_IRQn;
+    stcCfg.enIRQn = SPI_RX_DMA_IRQn;
     (void)INTC_IrqSignIn(&stcCfg);
 
-    NVIC_ClearPendingIRQ(SPI_DMA_RX_IRQn);
-    NVIC_SetPriority(SPI_DMA_RX_IRQn, SPI_DMA_RX_INT_PRIO);
-    NVIC_EnableIRQ(SPI_DMA_RX_IRQn);
+    NVIC_ClearPendingIRQ(stcCfg.enIRQn);
+    NVIC_SetPriority(stcCfg.enIRQn, SPI_RX_DMA_IRQ_PRI);
+    NVIC_EnableIRQ(stcCfg.enIRQn);
 
-    stcCfg.enIRQn = SPI_DMA_TX_IRQn;
+    stcCfg.enIRQn = SPI_TX_DMA_IRQn;
     (void)INTC_IrqSignIn(&stcCfg);
 
-    NVIC_ClearPendingIRQ(SPI_DMA_TX_IRQn);
-    NVIC_SetPriority(SPI_DMA_TX_IRQn, SPI_DMA_TX_INT_PRIO);
-    NVIC_EnableIRQ(SPI_DMA_TX_IRQn);
+    NVIC_ClearPendingIRQ(stcCfg.enIRQn);
+    NVIC_SetPriority(stcCfg.enIRQn, SPI_TX_DMA_IRQ_PRI);
+    NVIC_EnableIRQ(stcCfg.enIRQn);
 
-    DMA_TransIntCmd(SPI_DMA_UNIT, SPI_DMA_RX_INT|SPI_DMA_TX_INT, Enable);
+    DMA_TransIntCmd(SPI_DMA_UNIT, SPI_RX_DMA_INT_TYPE|SPI_TX_DMA_INT_TYPE, Enable);
 }
 
-void SPI_DMA_RX_IRQ_HANDLER(void)
+/**
+ * @brief  DMA TC0 IRQ handler.
+ * @param  None
+ * @retval None
+ */
+void DMA_TC0_IrqHandler(void)
 {
-    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_DMA_RX_FLAG);
+    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_RX_DMA_FLAG);
     u8RxFlag = 1U;
 }
 
-void SPI_DMA_TX_IRQ_HANDLER(void)
+/**
+ * @brief  DMA TC1 IRQ handler.
+ * @param  None
+ * @retval None
+ */
+void DMA_TC1_IrqHandler(void)
 {
-    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_DMA_TX_FLAG);
+    DMA_ChCmd(SPI_DMA_UNIT, SPI_TX_DMA_CH, Disable);
+    DMA_ClearTransIntStatus(SPI_DMA_UNIT, SPI_TX_DMA_FLAG);
 }
 
 /**
@@ -428,6 +447,8 @@ static void SpiConfig(void)
     CLK_FcgPeriphClockCmd(SPI_PERIPH_CLK, Enable);
     /* Initializes SPI. */
     (void)SPI_Init(SPI_UNIT, &stcSpiInit);
+    /* Enable mode fault detection if needed. */
+    SPI_ModeFaultDetectCmd(SPI_UNIT, Enable);
     /* SPI interrupt configuration. */
     SpiIrqConfig();
     /* Enable SPI function. */

@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -76,22 +77,11 @@ typedef struct
  * @{
  */
 
-/**
- * @defgroup I2C_Mode I2C mode
- * @{
- */
-#define I2C_MASTER                    (I2C_SR_MSL)
-#define I2C_SLAVE                     (0x00000UL)
-/**
- * @}
- */
-
-/**
- * @defgroup I2C_Tx_Rx I2C tx or rx
- * @{
- */
-#define I2C_TX                        (I2C_SR_TRA)
-#define I2C_RX                        (0X00000UL)
+/** @defgroup I2C_Trans_Dir I2C transfer direction
+  * @{
+  */
+#define I2C_DIR_TX                    (0x0U)
+#define I2C_DIR_RX                    (0x1U)
 /**
  * @}
  */
@@ -178,11 +168,11 @@ typedef struct
 #define I2C_FLAG_RX_FULL              (I2C_SR_RFULLF)
 #define I2C_FLAG_TX_EMPTY             (I2C_SR_TEMPTYF)
 #define I2C_FLAG_ARBITRATE_FAIL       (I2C_SR_ARLOF)
-#define I2C_FLAG_ACK                  (I2C_SR_ACKRF)
-#define I2C_FLAG_NACK                 (I2C_SR_NACKF)
+#define I2C_FLAG_ACKR                 (I2C_SR_ACKRF)
+#define I2C_FLAG_NACKF                (I2C_SR_NACKF)
 #define I2C_FLAG_MASTER               (I2C_SR_MSL)
 #define I2C_FLAG_BUSY                 (I2C_SR_BUSY)
-#define I2C_FLAG_TX                   (I2C_SR_TRA)
+#define I2C_FLAG_TRA                  (I2C_SR_TRA)
 #define I2C_FLAG_GENERAL_CALL         (I2C_SR_GENCALLF)
 #define I2C_FLAG_SMBUS_DEFAULT_MATCH  (I2C_SR_SMBDEFAULTF)
 #define I2C_FLAG_SMBUS_HOST_MATCH     (I2C_SR_SMBHOSTF)
@@ -236,8 +226,7 @@ en_result_t I2C_Init(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t* pstcI2cInit, fl
 void I2C_SlaveAddrConfig(CM_I2C_TypeDef* I2Cx, uint32_t u32AddrNum, uint32_t u32AddrMode, uint32_t u32Addr);
 void I2C_Cmd(CM_I2C_TypeDef *I2Cx, en_functional_state_t enNewState);
 void I2C_FastAckCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState);
-void I2C_SetMode(CM_I2C_TypeDef* I2Cx, uint32_t u32Mode);
-void I2C_SetTxRx(CM_I2C_TypeDef* I2Cx, uint32_t u32TxRx);
+void I2C_BusWaitCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState);
 
 void I2C_SmbusConfig(CM_I2C_TypeDef* I2Cx, uint32_t u32SmbusConfig, en_functional_state_t enNewState);
 void I2C_SmBusCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState);
@@ -267,9 +256,11 @@ void I2C_AckConfig(CM_I2C_TypeDef* I2Cx, uint32_t u32AckConfig);
 /* High level functions for reference ********************************/
 en_result_t I2C_Start(CM_I2C_TypeDef* I2Cx, uint32_t u32Timeout);
 en_result_t I2C_Restart(CM_I2C_TypeDef* I2Cx, uint32_t u32Timeout);
-en_result_t I2C_AddrTrans(CM_I2C_TypeDef* I2Cx, uint8_t u8Addr, uint32_t u32Timeout);
-en_result_t I2C_DataTrans(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint32_t u32Size, uint32_t u32Timeout);
-en_result_t I2C_DataReceive(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout);
+en_result_t I2C_TransAddr(CM_I2C_TypeDef* I2Cx, uint16_t u16Addr, uint8_t u8Dir, uint32_t u32Timeout);
+en_result_t I2C_Trans10BitAddr(CM_I2C_TypeDef* I2Cx, uint16_t u16Addr, uint8_t u8Dir, uint32_t u32Timeout);
+en_result_t I2C_TransData(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint32_t u32Size, uint32_t u32Timeout);
+en_result_t I2C_ReceiveData(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout);
+en_result_t I2C_MasterReceiveDataAndStop(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout);
 en_result_t I2C_Stop(CM_I2C_TypeDef* I2Cx, uint32_t u32Timeout);
 en_result_t I2C_WaitStatus(const CM_I2C_TypeDef *I2Cx, uint32_t u32Flag, en_flag_status_t enStatus, uint32_t u32Timeout);
 

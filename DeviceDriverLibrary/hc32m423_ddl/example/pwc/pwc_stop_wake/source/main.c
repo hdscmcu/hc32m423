@@ -66,7 +66,7 @@
 /*******************************************************************************
  * Local variable definitions ('static')
  ******************************************************************************/
-uint8_t u8IntCnt = 0U;
+static __IO uint8_t u8IntCnt = 0U;
 
 /*******************************************************************************
  * Function implementation - global ('extern') and local ('static')
@@ -94,18 +94,18 @@ static void KEY1_Init(void)
     stc_extint_init_t stcExtIntInit;
     stc_gpio_init_t stcGpioInit;
 
-    GPIO_StructInit(&stcGpioInit);
+    (void)GPIO_StructInit(&stcGpioInit);
     /* KEY1, KEY2, KEY4 initialize */
     stcGpioInit.u16ExtInt = PIN_EXTINT_ON;
-    GPIO_Init(KEY1_INT_PORT, KEY1_INT_PIN, &stcGpioInit);
+    (void)GPIO_Init(KEY1_INT_PORT, KEY1_INT_PIN, &stcGpioInit);
 
-    EXTINT_StructInit(&stcExtIntInit);
+    (void)EXTINT_StructInit(&stcExtIntInit);
 
     /* EXTINT Channel 5 (KEY1) configure */
     stcExtIntInit.u32ExtIntFilterA      = EXTINT_FILTER_A_ON;
     stcExtIntInit.u32ExtIntFilterAClock = EXTINT_FILTER_A_CLK_DIV1;
     stcExtIntInit.u32ExtIntLevel        = EXTINT_TRIG_FALLING;
-    EXTINT_Init(KEY1_INT_CH, &stcExtIntInit);
+    (void)EXTINT_Init(KEY1_INT_CH, &stcExtIntInit);
 
     /* NVIC configure */
     /* IRQ No.013, fixed entry for EXTINT5(KEY1) */
@@ -167,7 +167,7 @@ int32_t main(void)
     stcPwcStopConfig.u8AwakeClock = PWC_SYSCLK_FIX;
     stcPwcStopConfig.u8WaitFlash = PWC_WAIT_FLASH_ENABLE;
 
-    PWC_StopConfig(&stcPwcStopConfig);
+    (void)PWC_StopConfig(&stcPwcStopConfig);
 
     /* Config EIRQ5 as stop mode wake-up source */
     INTC_WakeupSrcCmd(INTC_WUPEN_EIRQWUEN_5, Enable);

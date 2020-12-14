@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -44,20 +45,19 @@
 
 /* Define slave device address for example */
 #define DEVICE_ADDRESS                  (0x06U)
+//#define I2C_10BITS_ADDRESS              (1U)
 
 /* Define port and pin for SDA and SCL */
 #define I2C_SCL_PORT                    (GPIO_PORT_7)
 #define I2C_SCL_PIN                     (GPIO_PIN_5)
 #define I2C_SDA_PORT                    (GPIO_PORT_7)
 #define I2C_SDA_PIN                     (GPIO_PIN_6)
+#define I2C_GPIO_FUNC                   (GPIO_FUNC_7_I2C)
 
 #define TIMEOUT                         (0x14000U)
 
-#define ADDRESS_W                       (0x00U)
-#define ADDRESS_R                       (0x01U)
-
 /* Define Write and read data length for the example */
-#define TEST_DATA_LEN                   (128U)
+#define TEST_DATA_LEN                   (256U)
 /* Define i2c baudrate */
 #define I2C_BAUDRATE                    (400000UL)
 
@@ -79,65 +79,111 @@ static uint8_t u8RxBuf[TEST_DATA_LEN];
  ******************************************************************************/
 
 /**
- * @brief  Slave send data to master
- * @param  [in]  pu8TxData  The data buffer to be send.
- * @param  [in]  u32Size    The data length to be send.
- * @retval en_result_t              Enumeration value:
+ * @brief  Slave receive data
+ *
+ * @param  au8Data               Data array
+ * @param  u32Size               Data size
+ * @param  u32Timeout            Time out count
+ * @retval en_result_t           Enumeration value:
  *         @arg Ok:                 Success
+ *         @arg Error:              Failed
  *         @arg ErrorTimeout:       Time out
  */
-static en_result_t Slave_WriteData(const uint8_t *pu8TxData, uint32_t u32Size)
+static en_result_t I2C_Slave_Receive(uint8_t au8Data[], uint32_t u32Size, uint32_t u32Timeout)
 {
     en_result_t enRet;
+    /* clear all status */
 
-    enRet = I2C_DataTrans(I2C_UNIT, pu8TxData, u32Size, TIMEOUT);
-    if(Ok == enRet)
+    I2C_Cmd(I2C_UNIT, Enable);
+
+    /* Clear status */
+    I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP|I2C_FLAG_NACKF);
+
+    /* Wait slave address matched */
+    while(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0))
     {
-        /* Wait stop condition */
-        uint32_t u32TimeOut = TIMEOUT;
-        while(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_STOP))
+        ;
+    }
+    I2C_ClearStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0);
+
+    if(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TRA))
+    {
+        /* Slave receive data*/
+        enRet = I2C_ReceiveData(I2C_UNIT, au8Data, u32Size, u32Timeout);
+
+        if((Ok == enRet) || (ErrorTimeout == enRet))
         {
-            /* Release SCL pin */
-            (void)I2C_ReadData(I2C_UNIT);
-            if(0U == (u32TimeOut))
-            {
-                enRet = ErrorTimeout;
-                break;
-            }
-            u32TimeOut--;
+            /* Wait stop condition */
+            enRet = I2C_WaitStatus(I2C_UNIT, I2C_FLAG_STOP, Set, u32Timeout);
         }
     }
+    else
+    {
+        enRet = Error;
+    }
 
+    I2C_Cmd(I2C_UNIT, Disable);
     return enRet;
 }
 
 /**
- * @brief  Receive the data until stop condition received
- * @param  [in] u8RxData[]          The receive buffer pointer.
- * @retval None
+ * @brief  Slave transmit data
+ **
+ * @param  au8Data               Data array
+ * @param  u32Size               Data size
+ * @param  u32Timeout            Time out count
+ * @retval en_result_t           Enumeration value:
+ *         @arg Ok:                 Success
+ *         @arg Error:              Failed
+ *         @arg ErrorTimeout:       Time out
  */
-static void Slave_RevData(uint8_t u8RxData[])
+static en_result_t I2C_Slave_Transmit(uint8_t au8Data[], uint32_t u32Size, uint32_t u32Timeout)
 {
-    uint8_t i = 0U;
+    en_result_t enRet;
 
-    for(;;)
+    I2C_Cmd(I2C_UNIT, Enable);
+
+    /* Clear status */
+    I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP|I2C_FLAG_NACKF);
+
+    /* Wait slave address matched */
+    while(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0))
     {
-        /* Wait for the Rx full flag set */
-        if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_RX_FULL))
-        {
-            /* Read the data from buffer */
-            u8RxData[i] = I2C_ReadData(I2C_UNIT);
-            i++;
-        }
+        ;
+    }
+    I2C_ClearStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0);
 
-        /* Detect the stop signal on the bus */
-        if(Set == I2C_GetStatus(I2C_UNIT, I2C_FLAG_STOP))
+#ifdef I2C_10BITS_ADDRESS
+    /* Wait slave address matched */
+    while(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0))
+    {
+        ;
+    }
+    I2C_ClearStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0);
+#endif
+
+    if(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TRA))
+    {
+        enRet = Error;
+    }
+    else
+    {
+        enRet = I2C_TransData(I2C_UNIT, au8Data, u32Size, u32Timeout);
+
+        if((Ok == enRet) || (ErrorTimeout == enRet))
         {
-            I2C_ClearStatus(I2C_UNIT, I2C_FLAG_STOP);
-            break;
+            /* Release SCL pin */
+            (void)I2C_ReadData(I2C_UNIT);
+
+            /* Wait stop condition */
+            enRet = I2C_WaitStatus(I2C_UNIT, I2C_FLAG_STOP, Set, u32Timeout);
         }
     }
+
+    I2C_Cmd(I2C_UNIT, Disable);
+    return enRet;
 }
+
 
 /**
  * @brief  Initialize the I2C peripheral for slave
@@ -162,8 +208,6 @@ static en_result_t Slave_Initialize(void)
 
     if(Ok == enRet)
     {
-        I2C_Cmd(I2C_UNIT, Enable);
-
         /* Set slave address*/
         #ifdef I2C_10BITS_ADDRESS
         I2C_SlaveAddrConfig(I2C_UNIT, I2C_ADDR0, I2C_ADDR_10BIT, DEVICE_ADDRESS);
@@ -214,7 +258,6 @@ static void Peripheral_WP(void)
 int32_t main(void)
 {
     uint32_t i;
-    uint8_t u8FailedFlag = 0U;
 
     /* Register write unprotected for some required peripherals. */
     Peripheral_WE();
@@ -230,8 +273,8 @@ int32_t main(void)
     }
 
     /* Initialize I2C port*/
-    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, GPIO_FUNC_7_I2C);
-    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, GPIO_FUNC_7_I2C);
+    GPIO_SetFunc(I2C_SCL_PORT, I2C_SCL_PIN, I2C_GPIO_FUNC);
+    GPIO_SetFunc(I2C_SDA_PORT, I2C_SDA_PIN, I2C_GPIO_FUNC);
 
     /* Enable I2C Peripheral*/
     CLK_FcgPeriphClockCmd(CLK_FCG_IIC, Enable);
@@ -250,41 +293,24 @@ int32_t main(void)
 
     for(;;)
     {
-        /* Wait slave address matched*/
-        while(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0))
+        if(Ok == I2C_Slave_Receive(u8RxBuf, TEST_DATA_LEN, TIMEOUT))
         {
-            ;
-        }
-        I2C_ClearStatus(I2C_UNIT, I2C_FLAG_MATCH_ADDR0);
-
-        if(Reset == I2C_GetStatus(I2C_UNIT, I2C_FLAG_TX))
-        {
-            /* Slave receive data*/
-            Slave_RevData(u8RxBuf);
-            //continue;
+            if(Ok != I2C_Slave_Transmit(u8RxBuf, TEST_DATA_LEN, TIMEOUT))
+            {
+                /* Failed */
+                break;
+            }
         }
         else
         {
-            /* Slave send data*/
-            if(Ok != Slave_WriteData(u8RxBuf, TEST_DATA_LEN))
-            {
-                u8FailedFlag = 1U;
-            }
+            /* Failed */
             break;
         }
     }
 
-    /* Communication finished */
-    if(0U == u8FailedFlag)
-    {
-        BSP_LED_Off(LED_RED);
-        BSP_LED_On(LED_GREEN);
-    }
-    else
-    {
-        BSP_LED_Off(LED_GREEN);
-        BSP_LED_On(LED_RED);
-    }
+    /* Communication failed */
+    BSP_LED_Off(LED_GREEN);
+    BSP_LED_On(LED_RED);
     Peripheral_WP();
     for(;;)
     {

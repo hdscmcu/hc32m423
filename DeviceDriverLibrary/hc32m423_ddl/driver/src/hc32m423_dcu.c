@@ -185,7 +185,7 @@ en_result_t DCU_Init(CM_DCU_TypeDef *DCUx, const stc_dcu_init_t *pstcDcuInit)
 }
 
 /**
- * @brief  Set the fields of structure stc_uart_init_t to default values.
+ * @brief  Set the fields of structure stc_dcu_init_t to default values.
  * @param  [out] pstcDcuInit        Pointer to a @ref stc_dcu_init_t structure.
  * @retval An en_result_t enumeration value:
  *           - Ok: Initialize success

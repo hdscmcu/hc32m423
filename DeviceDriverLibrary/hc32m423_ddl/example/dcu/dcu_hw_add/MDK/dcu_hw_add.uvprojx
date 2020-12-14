@@ -20,7 +20,7 @@
           <Cpu>IROM(0x00000000,0x20000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M4") FPU2 CLOCK(80000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD1FFFE000 -FC4000 -FN1 -FF0HC32M423 -FS00 -FL020000 -FP0($$Device:HC32M423KATB$FlashARM\HC32M423.FLM))</FlashDriverDll>
+          <FlashDriverDll>CMSIS_AGDI(-S0 -C0 -P0 -FD1FFFE000 -FC1000 -FN1 -FF0HC32M423 -FS00 -FL020000 -FP0($$Device:HC32M423KATB$FlashARM\HC32M423.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
           <RegisterFile>$$Device:HC32M423KATB$Device\Include\HC32M423KATB.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
@@ -109,12 +109,12 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments>  -MPU</SimDllArguments>
-          <SimDlgDll>DCM.DLL</SimDlgDll>
+          <SimDllArguments> -MPU</SimDllArguments>
+          <SimDlgDll>DARMCM1.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM4</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
-          <TargetDllArguments> -MPU</TargetDllArguments>
-          <TargetDlgDll>TCM.DLL</TargetDlgDll>
+          <TargetDllArguments>  -MPU</TargetDllArguments>
+          <TargetDlgDll>TARMCM1.DLL</TargetDlgDll>
           <TargetDlgDllArguments>-pCM4</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
@@ -173,7 +173,7 @@
             <UseExternalTool>0</UseExternalTool>
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
-            <Capability>1</Capability>
+            <Capability>0</Capability>
             <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
@@ -199,19 +199,19 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
-            <AdsACrf>0</AdsACrf>
+            <AdsALst>1</AdsALst>
+            <AdsACrf>1</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
             <AdsLLst>1</AdsLLst>
             <AdsLmap>1</AdsLmap>
-            <AdsLcgr>0</AdsLcgr>
-            <AdsLsym>0</AdsLsym>
-            <AdsLszi>0</AdsLszi>
-            <AdsLtoi>0</AdsLtoi>
-            <AdsLsun>0</AdsLsun>
-            <AdsLven>0</AdsLven>
-            <AdsLsxf>0</AdsLsxf>
+            <AdsLcgr>1</AdsLcgr>
+            <AdsLsym>1</AdsLsym>
+            <AdsLszi>1</AdsLszi>
+            <AdsLtoi>1</AdsLtoi>
+            <AdsLsun>1</AdsLsun>
+            <AdsLven>1</AdsLven>
+            <AdsLsxf>1</AdsLsxf>
             <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
@@ -224,11 +224,12 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>1</RvdsVP>
-            <hadIRAM2>0</hadIRAM2>
-            <hadIROM2>0</hadIROM2>
+            <RvdsMve>0</RvdsMve>
+            <hadIRAM2>1</hadIRAM2>
+            <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
             <useUlib>1</useUlib>
-            <EndSel>1</EndSel>
+            <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
@@ -238,7 +239,7 @@
             <NoZi1>0</NoZi1>
             <NoZi2>0</NoZi2>
             <NoZi3>0</NoZi3>
-            <NoZi4>1</NoZi4>
+            <NoZi4>0</NoZi4>
             <NoZi5>0</NoZi5>
             <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
@@ -351,8 +352,8 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>0</Optim>
-            <oTime>1</oTime>
+            <Optim>1</Optim>
+            <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -365,10 +366,13 @@
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
             <useXO>0</useXO>
-            <v6Lang>0</v6Lang>
-            <v6LangP>0</v6LangP>
-            <vShortEn>0</vShortEn>
-            <vShortWch>0</vShortWch>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
+            <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>--diag_suppress=186,66</MiscControls>
               <Define>__DEBUG,HC32M423,USE_DDL_DRIVER</Define>
@@ -386,6 +390,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
+            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -450,17 +455,8 @@
             </File>
             -->
             <File>
-<FileName>hc32m423_gpio.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_gpio.c</FilePath></File>
-<File>
-<FileName>hc32m423_dcu.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_dcu.c</FilePath></File>
-<File>
 <FileName>hc32m423_icg.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_icg.c</FilePath></File>
-<File>
-<FileName>hc32m423_interrupts.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_interrupts.c</FilePath></File>
 <File>
 <FileName>hc32m423_clk.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_clk.c</FilePath></File>
@@ -468,11 +464,20 @@
 <FileName>hc32m423_pwc.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_pwc.c</FilePath></File>
 <File>
+<FileName>hc32m423_efm.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_efm.c</FilePath></File>
+<File>
 <FileName>hc32m423_utility.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_utility.c</FilePath></File>
 <File>
-<FileName>hc32m423_efm.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_efm.c</FilePath></File>
+<FileName>hc32m423_gpio.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_gpio.c</FilePath></File>
+<File>
+<FileName>hc32m423_interrupts.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_interrupts.c</FilePath></File>
+<File>
+<FileName>hc32m423_dcu.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_dcu.c</FilePath></File>
 
     </Files>
   </Group>
@@ -516,7 +521,7 @@
           <Cpu>IROM(0x00000000,0x20000) IRAM(0x1FFFE000,0x4000) CPUTYPE("Cortex-M4") FPU2 CLOCK(80000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD1FFFE000 -FC4000 -FN1 -FF0HC32M423 -FS00 -FL020000 -FP0($$Device:HC32M423KATB$FlashARM\HC32M423.FLM))</FlashDriverDll>
+          <FlashDriverDll>CMSIS_AGDI(-S0 -C0 -P0 -FD1FFFE000 -FC1000 -FN1 -FF0HC32M423 -FS00 -FL020000 -FP0($$Device:HC32M423KATB$FlashARM\HC32M423.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
           <RegisterFile>$$Device:HC32M423KATB$Device\Include\HC32M423KATB.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
@@ -947,17 +952,8 @@
             </File>
             -->
             <File>
-<FileName>hc32m423_gpio.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_gpio.c</FilePath></File>
-<File>
-<FileName>hc32m423_dcu.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_dcu.c</FilePath></File>
-<File>
 <FileName>hc32m423_icg.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_icg.c</FilePath></File>
-<File>
-<FileName>hc32m423_interrupts.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_interrupts.c</FilePath></File>
 <File>
 <FileName>hc32m423_clk.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_clk.c</FilePath></File>
@@ -965,11 +961,20 @@
 <FileName>hc32m423_pwc.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_pwc.c</FilePath></File>
 <File>
+<FileName>hc32m423_efm.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_efm.c</FilePath></File>
+<File>
 <FileName>hc32m423_utility.c</FileName>
 <FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_utility.c</FilePath></File>
 <File>
-<FileName>hc32m423_efm.c</FileName>
-<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_efm.c</FilePath></File>
+<FileName>hc32m423_gpio.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_gpio.c</FilePath></File>
+<File>
+<FileName>hc32m423_interrupts.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_interrupts.c</FilePath></File>
+<File>
+<FileName>hc32m423_dcu.c</FileName>
+<FileType>1</FileType><FilePath>..\..\..\..\driver\src\hc32m423_dcu.c</FilePath></File>
 
     </Files>
   </Group>

@@ -1952,16 +1952,7 @@
     </file>
     -->
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_cmp.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_gpio.c</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_icg.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_interrupts.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_clk.c</name>
@@ -1970,13 +1961,22 @@
       <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_pwc.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_utility.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_efm.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_tmr4.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_efm.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_cmp.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_utility.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_gpio.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\driver\src\hc32m423_interrupts.c</name>
     </file>
 
   </group>

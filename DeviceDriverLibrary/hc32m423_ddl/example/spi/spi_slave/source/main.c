@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Refined this example.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -44,49 +45,49 @@
  * SPI unit instance for this example.
  * 'SPI_UNIT' can only be defined as CM_SPI.
  */
-#define SPI_UNIT                    (CM_SPI)
-#define SPI_PERIPH_CLK              (CLK_FCG_SPI)
+#define SPI_UNIT                        (CM_SPI)
+#define SPI_PERIPH_CLK                  (CLK_FCG_SPI)
 
 /* SPI pin definition. */
-#define SPI_NSS_PORT                (GPIO_PORT_D)
-#define SPI_NSS_PIN                 (GPIO_PIN_6)
-#define SPI_SCK_PORT                (GPIO_PORT_D)
-#define SPI_SCK_PIN                 (GPIO_PIN_4)
-#define SPI_MOSI_PORT               (GPIO_PORT_D)
-#define SPI_MOSI_PIN                (GPIO_PIN_3)
-#define SPI_MISO_PORT               (GPIO_PORT_D)
-#define SPI_MISO_PIN                (GPIO_PIN_5)
+#define SPI_NSS_PORT                    (GPIO_PORT_D)
+#define SPI_NSS_PIN                     (GPIO_PIN_6)
+#define SPI_SCK_PORT                    (GPIO_PORT_D)
+#define SPI_SCK_PIN                     (GPIO_PIN_4)
+#define SPI_MOSI_PORT                   (GPIO_PORT_D)
+#define SPI_MOSI_PIN                    (GPIO_PIN_3)
+#define SPI_MISO_PORT                   (GPIO_PORT_D)
+#define SPI_MISO_PIN                    (GPIO_PIN_5)
 
 /* SPI wire mode definition. @ref SPI_Wire_Mode */
-#define SPI_WIRE_MD                 (SPI_4WIRE)
+#define SPI_WIRE_MD                     (SPI_4WIRE)
 
 /*
  * SPI standard mode. @ref SPI_Standard_Mode
  * NOTE: Only SPI_MD1 and SPI_MD3 can be used in 3-wire slave mode.
  */
-#define SPI_MD                      (SPI_MD1)
+#define SPI_MD                          (SPI_MD1)
 
 /* SPI transmission mode. @ref SPI_Trans_Mode */
-#define SPI_TRANS_MD                (SPI_FULL_DUPLEX)
+#define SPI_TRANS_MD                    (SPI_FULL_DUPLEX)
 
 /*
  * SPI baud rate divider. @ref SPI_Clock_Divider
  * NOTE! The maximum transmission baud rate of the slave is PCLK/6. \
      Master baud rate depends on slave PCLK frequency.
  */
-#define SPI_CLK_DIV                 (SPI_CLK_DIV8)
+#define SPI_CLK_DIV                     (SPI_CLK_DIV8)
 
 /* SPI NSS pin active level. @ref SPI_NSS_Active_Level */
-#define SPI_NSS_ACTIVE_LEVEL        (SPI_NSS_ACTIVE_LOW)
+#define SPI_NSS_ACTIVE_LEVEL            (SPI_NSS_ACTIVE_LOW)
 
 /* SPI data buffer size definition. */
-#define SPI_BUF_LEN                 (8U)
-#define SPI_IDLE_TIME               (400U)              /* Customer definition. */
+#define SPI_BUF_LEN                     (8U)
+#define SPI_IDLE_TIME                   (4000U)             /* Customer definition. */
 
 /* Command from master. */
-#define SPI_CMD_WR_SLAVE            (0x51U)             /* Customer definition. */
-#define SPI_CMD_RD_SLAVE            (0x56U)             /* Customer definition. */
-#define SPI_DUMMY_DATA              (0xFFU)
+#define SPI_CMD_WR_SLAVE                (0x51U)             /* Customer definition. */
+#define SPI_CMD_RD_SLAVE                (0x56U)             /* Customer definition. */
+#define SPI_DUMMY_DATA                  (0xFFU)
 
 /*******************************************************************************
  * Global variable definitions (declared in header file with 'extern')
@@ -108,9 +109,7 @@ static __IO uint32_t m_u32RxIdle    = 0U;
 static __IO uint8_t m_u8RxStart     = 0U;
 static __IO uint8_t m_u8RxDataCount = 0U;
 static __IO uint8_t m_u8TxDataCount = 0U;
-/* All of the data is valid. */
 static __IO uint8_t m_au8SpiRxBuf[SPI_BUF_LEN];
-/* Valid data starts at offset 0 and length is SPI_BUF_LEN-2. */
 static __IO uint8_t m_au8SpiTxBuf[SPI_BUF_LEN] = \
 {
     0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80
@@ -141,7 +140,7 @@ int32_t main(void)
 
     for (;;)
     {
-        if (m_u8RxStart)
+        if (m_u8RxStart != 0U)
         {
             if (++m_u32RxIdle >= SPI_IDLE_TIME)
             {
@@ -152,19 +151,24 @@ int32_t main(void)
 
                 if (m_au8SpiRxBuf[0U] == SPI_CMD_RD_SLAVE)
                 {
-                    /* Prepare data that needs to be sent to master.
-                       Valid data starts at offset 0 and length is SPI_BUF_LEN-2. */
+                    /* Prepare data that needs to be sent to master. */
                     m_au8SpiTxBuf[0U]++;
                     m_au8SpiTxBuf[1U]++;
                     m_au8SpiTxBuf[2U]++;
                     m_au8SpiTxBuf[3U]++;
                     m_au8SpiTxBuf[4U]++;
                     m_au8SpiTxBuf[5U]++;
+                    m_au8SpiTxBuf[6U]++;
+                    m_au8SpiTxBuf[7U]++;
                 }
-                m_u32RxIdle = 0U;
-                m_u8RxStart = 0U;
+                m_u32RxIdle     = 0U;
+                m_u8RxStart     = 0U;
                 m_u8RxDataCount = 0U;
-                m_u8TxDataCount = 0U;
+
+                /* The following code is used to generate TX empty interrupt. */
+                SPI_Cmd(SPI_UNIT, Disable);
+                SPI_IntCmd(SPI_UNIT, SPI_INT_TX_EMPTY, Enable);
+                SPI_Cmd(SPI_UNIT, Enable);
             }
         }
     }
@@ -293,6 +297,10 @@ void SPI_RxEnd_IrqHandler(void)
         m_au8SpiRxBuf[m_u8RxDataCount] = (uint8_t)SPI_ReadData(SPI_UNIT);
         m_u8RxDataCount++;
     }
+    else
+    {
+        (void)SPI_ReadData(SPI_UNIT);
+    }
 }
 
 /**
@@ -303,10 +311,14 @@ void SPI_RxEnd_IrqHandler(void)
  */
 void SPI_TxEmpty_IrqHandler(void)
 {
-    SPI_WriteData(SPI_UNIT, m_au8SpiTxBuf[m_u8TxDataCount++]);
-    if (m_u8TxDataCount >= SPI_BUF_LEN)
+    if (m_u8TxDataCount < SPI_BUF_LEN)
+    {
+        SPI_WriteData(SPI_UNIT, m_au8SpiTxBuf[m_u8TxDataCount++]);
+    }
+    else
     {
         m_u8TxDataCount = 0U;
+        SPI_IntCmd(SPI_UNIT, SPI_INT_TX_EMPTY, Disable);
     }
 }
 

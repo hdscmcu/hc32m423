@@ -56,9 +56,6 @@
 /* CTC reference clock freqency */
 #define CTC_REF_CLK_FREQ                (8000000UL)     /* 8MHz */
 
-/* Internal high speed RC freqency */
-#define CTC_TRIM_HRC_FREQ               (CTC_TRIM_HRC_16M)
-
 /* CTC TRMVAL value */
 #define CTC_TRIM_VALUE                  (0x21UL)        /* -31 */
 
@@ -170,7 +167,6 @@ int32_t main(void)
     uint8_t u8TrimmingValue;
     stc_irq_signin_config_t stcIrqConfig;
     stc_ctc_init_t stcCtcInit = {
-        .u32HrcFreq = CTC_TRIM_HRC_FREQ,
         .u32RefClockFreq = CTC_REF_CLK_FREQ,
         .u32RefClockSrc = CTC_REF_CLK_SRC,
         .u32RefClockDiv = CTC_REF_CLK_DIV4096,

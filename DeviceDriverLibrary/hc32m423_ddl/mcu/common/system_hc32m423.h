@@ -126,7 +126,7 @@ extern "C"
 
 extern uint32_t SystemCoreClock;                /*!< System clock frequency (Core clock) */
 extern uint32_t HRC_VALUE;                      /*!< HRC frequency */
-extern const uint32_t au32HrcFreqTable[8];       /*!< HRC frequency table */
+extern const uint32_t au32HrcFreqTable[8];      /*!< HRC frequency table */
 /**
  * @}
  */

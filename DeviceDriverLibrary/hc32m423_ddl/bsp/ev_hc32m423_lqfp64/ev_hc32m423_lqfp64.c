@@ -375,7 +375,7 @@ __WEAKDEF void ExtInt07_SWInt15_IrqHandler(void)
     gu32GlobalKey |= 0x08UL;
     EXTINT_ClearExtIntStatus(BSP_KEY4_INT_CH);
 }
-#endif 
+#endif
 /**
  * @brief  NMI IRQ callback function for KEY3
  * @param  None

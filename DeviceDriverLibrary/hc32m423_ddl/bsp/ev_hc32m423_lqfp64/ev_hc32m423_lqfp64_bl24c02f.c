@@ -1,11 +1,12 @@
 /**
  *******************************************************************************
  * @file  ev_hc32m423_lqfp64_bl24c02f.c
- * @brief This file provides firmware functions for E2PROM BL24C02F.
+ * @brief This file provides firmware functions for EEPROM BL24C02F.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -116,13 +117,12 @@ en_result_t BSP_BL24C02F_I2C_Init(void)
     (void)I2C_StructInit(&stcI2cInit);
     stcI2cInit.u32Baudrate = BSP_I2C_BAUDRATE;
     stcI2cInit.u32SclTime = 5U;
-    stcI2cInit.u32ClockDiv = I2C_CLK_DIV1;
+    stcI2cInit.u32ClockDiv = I2C_CLK_DIV4;
     enRet = I2C_Init(BSP_BL24C02F_I2C_UNIT, &stcI2cInit, &fErr);
 
     if(Ok == enRet)
     {
-        I2C_Cmd(BSP_BL24C02F_I2C_UNIT, Enable);
-        I2C_FastAckCmd(BSP_BL24C02F_I2C_UNIT, Disable);
+        I2C_BusWaitCmd(BSP_BL24C02F_I2C_UNIT, Enable);
     }
 
     return enRet;
@@ -155,25 +155,17 @@ en_result_t BSP_BL24C02F_I2C_Restart(void)
 /**
  * @brief  BL24C02F send device address
  * @param  [in] u8Addr              The device address to be sent
+ * @param  [in] u8Dir               Transfer direction, This parameter can be
+ *                                  one of the following values:
+ *         @arg I2C_DIR_TX
+ *         @arg I2C_DIR_RX
  * @retval en_result_t              Enumeration value:
  *         @arg Ok:                 Send successfully
  *         @arg ErrorTimeout:       Send address time out
  */
-en_result_t BSP_BL24C02F_I2C_AddrTrans(uint8_t u8Addr)
+en_result_t BSP_BL24C02F_I2C_TransAddr(uint8_t u8Addr, uint8_t u8Dir)
 {
-    return I2C_AddrTrans(BSP_BL24C02F_I2C_UNIT, u8Addr, BSP_BL24C02F_TIMEOUT);
-}
-
-/**
- * @brief  BL24C02F send data address
- * @param  [in] u8DataAddr          The data address to be sent
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Send successfully
- *         @arg ErrorTimeout:       Send address time out
- */
-en_result_t BSP_BL24C02F_I2C_DataAddrTrans(uint8_t u8DataAddr)
-{
-    return I2C_DataTrans(BSP_BL24C02F_I2C_UNIT, &u8DataAddr, 1U, BSP_BL24C02F_TIMEOUT);
+    return I2C_TransAddr(BSP_BL24C02F_I2C_UNIT, u8Addr, u8Dir, BSP_BL24C02F_TIMEOUT);
 }
 
 /**
@@ -185,9 +177,9 @@ en_result_t BSP_BL24C02F_I2C_DataAddrTrans(uint8_t u8DataAddr)
  *         @arg ErrorTimeout:       Send data time out
  *         @arg ErrorInvalidParameter: au8TxData is NULL
  */
-en_result_t BSP_BL24C02F_I2C_DataTrans(uint8_t const au8TxData[], uint32_t u32Size)
+en_result_t BSP_BL24C02F_I2C_TransData(uint8_t const au8TxData[], uint32_t u32Size)
 {
-    return I2C_DataTrans(BSP_BL24C02F_I2C_UNIT, au8TxData, u32Size, BSP_BL24C02F_TIMEOUT);
+    return I2C_TransData(BSP_BL24C02F_I2C_UNIT, au8TxData, u32Size, BSP_BL24C02F_TIMEOUT);
 }
 
 /**
@@ -199,9 +191,9 @@ en_result_t BSP_BL24C02F_I2C_DataTrans(uint8_t const au8TxData[], uint32_t u32Si
  *         @arg ErrorTimeout:       Receive data time out
  *         @arg ErrorInvalidParameter: au8RxData is NULL
  */
-en_result_t BSP_BL24C02F_I2C_DataReceive(uint8_t au8RxData[], uint32_t u32Size)
+en_result_t BSP_BL24C02F_I2C_ReceiveDataAndStop(uint8_t au8RxData[], uint32_t u32Size)
 {
-    return I2C_DataReceive(BSP_BL24C02F_I2C_UNIT, au8RxData, u32Size, BSP_BL24C02F_TIMEOUT);
+    return I2C_MasterReceiveDataAndStop(BSP_BL24C02F_I2C_UNIT, au8RxData, u32Size, BSP_BL24C02F_TIMEOUT);
 }
 
 /**
@@ -217,15 +209,48 @@ en_result_t BSP_BL24C02F_I2C_Stop(void)
 }
 
 /**
- * @brief  Wait BL24C02F ready
+ * @brief  BL24C02F I2C software reset
  * @param  None
- * @retval en_result_t              Enumeration value:
- *         @arg Ok:                 Wait successfully
- *         @arg ErrorTimeout:       Wait time out
+ * @retval None
  */
-en_result_t BSP_BL24C02F_I2C_WaitReady(void)
+void BSP_BL24C02F_I2C_SWReset(void)
 {
-    return I2C_WaitStatus(BSP_BL24C02F_I2C_UNIT, I2C_FLAG_BUSY, Reset, BSP_BL24C02F_TIMEOUT);
+    I2C_SWResetCmd(BSP_BL24C02F_I2C_UNIT, Enable);
+    I2C_SWResetCmd(BSP_BL24C02F_I2C_UNIT, Disable);
+}
+
+/**
+ * @brief  BL24C02F I2C command
+ * @param  [in] enNewState          The function new state.
+ *         @arg Enable:             Enable I2C.
+ *         @arg Disable:            Disable i2C.
+ * @retval None
+ */
+void BSP_BL24C02F_I2C_Cmd(en_functional_state_t enNewState)
+{
+    I2C_Cmd(BSP_BL24C02F_I2C_UNIT, enNewState);
+}
+
+/**
+ * @brief  BL24C02F I2C ACK config
+ * @param  [in] u32AckConfig        I2C ACK configurate.
+ *         @arg I2C_ACK:            Send ACK after date received.
+ *         @arg I2C_NACK:           Send NACK after date received.
+ * @retval None
+ */
+void BSP_BL24C02F_I2C_AckConfig(uint32_t u32AckConfig)
+{
+    I2C_AckConfig(BSP_BL24C02F_I2C_UNIT, u32AckConfig);
+}
+
+/**
+ * @brief  BL24C02F I2C ACK config
+ * @param  None
+ * @retval en_flag_status_t         The status of the I2C status flag, may be Set or Reset.
+ */
+en_flag_status_t BSP_BL24C02F_I2C_GetAckStatus(void)
+{
+    return I2C_GetStatus(BSP_BL24C02F_I2C_UNIT, I2C_FLAG_ACKR);
 }
 
 /**

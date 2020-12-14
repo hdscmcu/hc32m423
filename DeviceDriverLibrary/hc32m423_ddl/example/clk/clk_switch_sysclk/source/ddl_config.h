@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * @file  template/source/ddl_config.h
+ * @file  clk/clk_switch_sysclk/source/ddl_config.h
  * @brief This file contains HC32 Series Device Driver Library usage management.
  @verbatim
    Change Logs:

@@ -328,7 +328,7 @@ int32_t main(void)
     NVIC_EnableIRQ(stcIrqConfig.enIRQn);
 
     /* Set trigger source. */
-    TMRB_SetTriggerSrc(TMRB_UNIT, TMRB_EVT_SRC);
+    TMRB_SetTriggerSrc(TMRB_EVT_SRC);
 
     /* Set TMRB start count condition. */
     TMRB_HWStartCondCmd(TMRB_UNIT, TMRB_START_COND_EVT, Enable);

@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Refined this example.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -43,7 +44,7 @@
 #define APP_W25Q64_ADDR             (4096UL * 0UL)
 #define APP_BUF_SIZE                (512UL)
 
-#define APP_TIMEOUT_VALUE           (10000UL)
+#define APP_TIMEOUT_VALUE           (100000UL)
 
 /*******************************************************************************
  * Global variable definitions (declared in header file with 'extern')
@@ -90,7 +91,7 @@ int32_t main(void)
     /***************** Configuration end, application start **************/
     /* Read JEDEC ID: 0xEF4017 */
     W25QXX_ReadID(W25Q_JEDEC_ID, 0U, m_au8ReadBuffer, 3U);
-
+    BSP_LED_On(LED_BLUE);
     for (;;)
     {
         (void)W25QXX_EraseSector(APP_W25Q64_ADDR, APP_TIMEOUT_VALUE);
@@ -99,6 +100,8 @@ int32_t main(void)
         {
             /* Erase verification error. */
             BSP_LED_On(LED_RED);
+            BSP_LED_Off(LED_BLUE);
+            while (1U);
         }
         AppLoadData();
         (void)W25QXX_WriteData(APP_W25Q64_ADDR, m_au8WriteBuffer, \
@@ -108,6 +111,8 @@ int32_t main(void)
         {
             /* Program verification error. */
             BSP_LED_On(LED_RED);
+            BSP_LED_Off(LED_BLUE);
+            while (1U);
         }
     }
 }

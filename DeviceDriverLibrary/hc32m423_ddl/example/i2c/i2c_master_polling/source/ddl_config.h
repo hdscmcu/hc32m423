@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * @file  template/source/ddl_config.h
+ * @file  i2c/i2c_master_polling/source/ddl_config.h
  * @brief This file contains HC32 Series Device Driver Library usage management.
  @verbatim
    Change Logs:

@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-04       CDT             Corrected comments of ADC unit.
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -168,7 +169,7 @@
  *         in the structure stc_adc_init.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  pstcAdcInit            Pointer to a stc_adc_init_t structure value that
  *                                      contains the configuration information for the ADC.
  * @retval An en_result_t enumeration value.
@@ -209,7 +210,7 @@ en_result_t ADC_Init(CM_ADC_TypeDef *ADCx, const stc_adc_init_t *pstcAdcInit)
  * @brief  De-initializes the ADC peripheral. Reset the registers.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @retval None
  */
 void ADC_DeInit(CM_ADC_TypeDef *ADCx)
@@ -271,7 +272,7 @@ en_result_t ADC_StructInit(stc_adc_init_t *pstcAdcInit)
  * @brief  Speficies scan convert mode.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u16Mode                ADC san convert mode.
  *                                      This parameter can be a value of @ref ADC_Scan_Convert_Mode.
  *   @arg  ADC_MD_SA_SSHOT:             Sequence A single shot.
@@ -291,7 +292,7 @@ void ADC_SetScanMode(CM_ADC_TypeDef *ADCx, uint16_t u16Mode)
  * @brief  Enable or disable specified sequence's channels.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u32Seq                 The sequence that it's specified channels will be enabled or disabled.
  *                                      This parameter can be a value of @ref ADC_Sequence
  *   @arg  ADC_SEQ_A:                   Sequence A.
@@ -360,7 +361,7 @@ en_result_t ADC_ChCmd(CM_ADC_TypeDef *ADCx,            \
  * @brief  Specifies average count for average channels.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u16Count               The average count to be set for the specified ADC unit.
  *                                      This parameter can be a value of @ref ADC_Average_Count
  *   @arg  ADC_AVG_CNT2
@@ -385,8 +386,8 @@ void ADC_SetAverageCount(CM_ADC_TypeDef *ADCx, uint16_t u16Count)
  * @brief  Enable or disable the specified average channels.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
- * @param  [in]  u32Ch             The ADC channels.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
+ * @param  [in]  u32Ch                  The ADC channels.
  *                                      This parameter can be values of @ref ADC_Channel
  *   @arg  ADC_CH0 ~ ADC_CH9
  * @param  [in]  enNewState:            An en_functional_state_t value.
@@ -414,7 +415,7 @@ void ADC_AverageChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32Ch, \
  * @brief  Specifies analog input source for extended channel.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u8Src                  The specified analog input source for extended channel(channel 8).
  *                                      This parameter can be a value of @ref ADC_Extend_Channel_Source
  *   @arg  ADC_EXT_CH_SRC_ADC_PIN:      Specifies the pin P11(ADC_IN8) as the extended channel analog input source.
@@ -457,7 +458,7 @@ en_result_t ADC_TriggerSrcStructInit(stc_adc_trigger_config_t *pstcCfg)
  * @brief  Configures trigger source for the specified sequence.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u32Seq                 The sequence to be configured.
  *                                      This parameter can be a value of @ref ADC_Sequence
  *   @arg  ADC_SEQ_A:                   Sequence A.
@@ -517,7 +518,7 @@ en_result_t ADC_TriggerSrcConfig(CM_ADC_TypeDef *ADCx, uint32_t u32Seq, \
  * @brief  Enable or disable the trigger source of the specified sequence.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u32Seq                 The sequence to be configured.
  *                                      This parameter can be a value of @ref ADC_Sequence
  *   @arg  ADC_SEQ_A:                   Sequence A.
@@ -549,7 +550,7 @@ void ADC_TriggerSrcCmd(CM_ADC_TypeDef *ADCx, uint32_t u32Seq, en_functional_stat
  * @brief  Enable or disable the interrupt of the specified sequence.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u32Seq                 The sequence to be configured.
  *                                      This parameter can be a value of @ref ADC_Sequence
  *   @arg  ADC_SEQ_A:                   Sequence A.
@@ -581,7 +582,7 @@ void ADC_SeqIntCmd(CM_ADC_TypeDef *ADCx, uint32_t u32Seq, en_functional_state_t 
  * @brief  Get the specified flag's status.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u8Flag                 Status flag.
  *                                      This parameter can be valueS of @ref ADC_Sequence_Status_Flag
  *   @arg  ADC_SEQ_FLAG_EOCA:           Status flag of the end of conversion of sequence A.
@@ -610,7 +611,7 @@ en_flag_status_t ADC_SeqGetStatus(const CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
  * @brief  Clear the specifed flags.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u8Flag                 Status flag.
  *                                      This parameter can be values of @ref ADC_Sequence_Status_Flag
  *   @arg  ADC_SEQ_FLAG_EOCA:           Status flag of the end of conversion of sequence A.
@@ -629,7 +630,7 @@ void ADC_SeqClearStatus(CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
  * @brief  Specifies the sample time(ADCLK cycles) of sample-hold.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  u8CycleCount           Number of ADCLK cycles for sample-hold. \
  *                                      It should be more than 0.4 microseconds.
  * @retval None
@@ -644,8 +645,8 @@ void ADC_SH_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8CycleCount)
  * @brief  Enable or disable sample-hold channels.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
- * @param  [in]  u32Ch             ADC channels.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
+ * @param  [in]  u32Ch                  ADC channels.
  *                                      This parameter be values of the following of @ref ADC_Channel
  *   @arg  ADC_CH0:                     Channel 0 of ADC.
  *   @arg  ADC_CH1:                     Channel 1 of ADC.
@@ -676,7 +677,7 @@ void ADC_SH_ChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32Ch, en_functional_state_t en
  * @brief  Enable or disable continuous sampling.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in]  enNewState:            An en_functional_state_t value.
  *   @arg  Enable:                      Enable continuous sampling.
  *   @arg  Disable:                     Disable continuous sampling.
@@ -702,7 +703,7 @@ void ADC_ContinuousSampleCmd(CM_ADC_TypeDef *ADCx, en_functional_state_t enNewSt
  *         the channels enabled in sequence A.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [out]  au16Value             Pointer to an uint16_t type memory which the ADC values to be stored.
  *                                      The location of the value store depends on the parameter u32Len.
  *                                      u32Len >= ADC_CH_CNT, all of the ADC data registers will be read:
@@ -771,7 +772,7 @@ en_result_t ADC_PollingSeqA(CM_ADC_TypeDef *ADCx, uint16_t au16Value[], \
  * @brief  Get all of the channels' value.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [out]  au16Value             Pointer to an uint16_t type memory which the ADC values to be stored.
  *                                      au16Value[0] = value of Channel 0,
  *                                      au16Value[1] = value of Channel 1,
@@ -812,7 +813,7 @@ en_result_t ADC_GetAllData(const CM_ADC_TypeDef *ADCx, uint16_t au16Value[], uin
  * @brief  Get the specified channels' values.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @param  [in] u32Ch                   The channels' ADC values will be read.
  *                                      This parameter can be a value of @ref ADC_Channel
  *   @arg  ADC_CH0 ~ ADC_CH9
@@ -867,8 +868,8 @@ en_result_t ADC_GetChData(const CM_ADC_TypeDef *ADCx, uint32_t u32Ch, \
  * @brief  Get a specified channel's value.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
- * @param  [in]  u32ChNum          The index number of ADC channel.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
+ * @param  [in]  u32ChNum               The index number of ADC channel.
  *                                      This parameter can be a value of @ref ADC_Channel_Number
  *   @arg  ADC_CH_NUM0
  *   @arg  ADC_CH_NUM1
@@ -897,7 +898,7 @@ uint16_t ADC_GetValue(const CM_ADC_TypeDef *ADCx, uint32_t u32ChNum)
  * @brief  Start the specified ADC unit.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @retval None
  * @note   Only start sequence A. Sequence B can only be start by trigger source.
  */
@@ -911,7 +912,7 @@ void ADC_Start(CM_ADC_TypeDef *ADCx)
  * @brief  Stop the specified ADC unit.
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC1:                     ADC unit 1 instance register base.
+ *   @arg  CM_ADC:                      ADC unit instance register base.
  * @retval None
  * @note   Only stop sequence A. Sequence B stop automatically after sampling.
  */

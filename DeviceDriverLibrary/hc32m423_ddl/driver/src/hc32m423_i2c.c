@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-11-16       CDT             Fix bug and optimize code for I2C driver and example
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -64,11 +65,11 @@
                                          | I2C_FLAG_RX_FULL                    \
                                          | I2C_FLAG_TX_EMPTY                   \
                                          | I2C_FLAG_ARBITRATE_FAIL             \
-                                         | I2C_FLAG_ACK                        \
-                                         | I2C_FLAG_NACK                       \
+                                         | I2C_FLAG_ACKR                       \
+                                         | I2C_FLAG_NACKF                      \
                                          | I2C_FLAG_MASTER                     \
                                          | I2C_FLAG_BUSY                       \
-                                         | I2C_FLAG_TX                         \
+                                         | I2C_FLAG_TRA                        \
                                          | I2C_FLAG_GENERAL_CALL               \
                                          | I2C_FLAG_SMBUS_DEFAULT_MATCH        \
                                          | I2C_FLAG_SMBUS_HOST_MATCH           \
@@ -82,7 +83,7 @@
                                          | I2C_FLAG_RX_FULL                    \
                                          | I2C_FLAG_TX_EMPTY                   \
                                          | I2C_FLAG_ARBITRATE_FAIL             \
-                                         | I2C_FLAG_NACK                       \
+                                         | I2C_FLAG_NACKF                      \
                                          | I2C_FLAG_GENERAL_CALL               \
                                          | I2C_FLAG_SMBUS_DEFAULT_MATCH        \
                                          | I2C_FLAG_SMBUS_HOST_MATCH           \
@@ -112,6 +113,9 @@
 #define IS_I2C_UNIT(x)                  ((x) == CM_I2C)
 
 #define IS_I2C_DIG_FILTER_CLK(x)        ((x) <= I2C_DIG_FILTER_CLK_DIV4)
+
+#define IS_I2C_7BIT_ADDR(x)             ((x) <= 0x7FUL)
+#define IS_I2C_10BIT_ADDR(x)            ((x) <= 0x3FFUL)
 
 #define IS_I2C_SPEED(x)                                                        \
 (   ((x) != 0U)                                     &&                         \
@@ -152,13 +156,9 @@
     ((x) == I2C_CLK_DIV64)                          ||                         \
     ((x) == I2C_CLK_DIV128))
 
-#define IS_I2C_MD(x)                                                           \
-(   ((x) == I2C_MASTER)                             ||                         \
-    ((x) == I2C_SLAVE))
-
-#define IS_I2C_TX_RX(x)                                                        \
-(   ((x) == I2C_TX)                                 ||                         \
-    ((x) == I2C_RX))
+#define IS_I2C_TRANS_DIR(x)                                                    \
+(   ((x) == I2C_DIR_TX)                            ||                          \
+    ((x) == I2C_DIR_RX))
 
 #define IS_I2C_ACK_CONFIG(x)                                                   \
 (   ((x) == I2C_ACK)                                ||                         \
@@ -207,11 +207,11 @@
  *         @arg I2C_FLAG_RX_FULL        : Receive buffer full flag
  *         @arg I2C_FLAG_TX_EMPTY       : Transfer buffer empty flag
  *         @arg I2C_FLAG_ARBITRATE_FAIL : Arbitration fails flag
- *         @arg I2C_FLAG_ACK            : ACK detected flag
- *         @arg I2C_FLAG_NACK           : NACK detected flag
+ *         @arg I2C_FLAG_ACKR           : ACK status flag
+ *         @arg I2C_FLAG_NACKF          : NACK detected flag
  *         @arg I2C_FLAG_MASTER         : Master mode flag
  *         @arg I2C_FLAG_BUSY           : Bus busy status flag
- *         @arg I2C_FLAG_TX             : Transfer mode flag
+ *         @arg I2C_FLAG_TRA            : Transfer mode flag
  *         @arg I2C_FLAG_GENERAL_CALL   : General call detected flag
  *         @arg I2C_FLAG_SMBUS_DEFAULT_MATCH: Smbus default address detected flag
  *         @arg I2C_FLAG_SMBUS_HOST_MATCH   : Smbus host address detected flag
@@ -510,44 +510,6 @@ void I2C_SlaveAddrConfig(CM_I2C_TypeDef* I2Cx, uint32_t u32AddrNum, uint32_t u32
 }
 
 /**
- * @brief  Manually set I2C master or slave mode
- * @param  [in] I2Cx                Pointer to I2C instance register base.
- *                                  This parameter can be a value of the following:
- *         @arg CM_I2C:             I2C instance register base.
- * @param  [in] u32Mode             Specify I2C in master or slave mode. @ref I2C_Mode
- *         This parameter can be one of the following values:
- *         @arg I2C_MASTER:         I2C master mode.
- *         @arg I2C_SLAVE:          I2C slave mode.
- * @retval None
- */
-void I2C_SetMode(CM_I2C_TypeDef* I2Cx, uint32_t u32Mode)
-{
-    DDL_ASSERT(IS_I2C_UNIT(I2Cx));
-    DDL_ASSERT(IS_I2C_MD(u32Mode));
-
-    MODIFY_REG32(I2Cx->SR, I2C_SR_MSL, u32Mode);
-}
-
-/**
- * @brief  Manually set I2C tx or rx
- * @param  [in] I2Cx                Pointer to I2C instance register base.
- *                                  This parameter can be a value of the following:
- *         @arg CM_I2C:             I2C instance register base.
- * @param  [in] u32TxRx             Specifies I2C in tx or rx mode. @ref I2C_Tx_Rx
- *         This parameter can be one of the following values:
- *         @arg I2C_TX:             I2C transfer mode.
- *         @arg I2C_RX:             I2C receive mode.
- * @retval None
- */
-void I2C_SetTxRx(CM_I2C_TypeDef* I2Cx, uint32_t u32TxRx)
-{
-    DDL_ASSERT(IS_I2C_UNIT(I2Cx));
-    DDL_ASSERT(IS_I2C_TX_RX(u32TxRx));
-
-    MODIFY_REG32(I2Cx->SR, I2C_SR_TRA, u32TxRx);
-}
-
-/**
  * @brief  I2C function command
  * @param  [in] I2Cx                Pointer to I2C instance register base.
  *                                  This parameter can be a value of the following:
@@ -572,8 +534,8 @@ void I2C_Cmd(CM_I2C_TypeDef *I2Cx, en_functional_state_t enNewState)
  *                                  This parameter can be a value of the following:
  *         @arg CM_I2C:             I2C instance register base.
  * @param  [in] enNewState          The function new state.
- *         @arg Enable:             Enable Fast ACK.
- *         @arg Disable:            Disable Fast ACK.
+ *         @arg Enable:             Enable I2C.
+ *         @arg Disable:            Disable i2C.
  * @retval None
  */
 void I2C_FastAckCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState)
@@ -588,6 +550,32 @@ void I2C_FastAckCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState)
     else
     {
         SET_REG32_BIT(I2Cx->CR1, I2C_CR1_FACKEN);
+    }
+}
+
+/**
+ * @brief I2C bus wait function command
+ * @param  [in] I2Cx                Pointer to I2C instance register base.
+ *                                  This parameter can be a value of the following:
+ *         @arg CM_I2C:             I2C instance register base.
+ * @param  [in] enNewState          The function new state.
+ *         @arg Enable:             Enable bus wait.
+ *         @arg Disable:            Disable bus wait.
+ * @retval None
+ */
+void I2C_BusWaitCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState)
+{
+    uint32_t u32CR4_Reg = ((uint32_t)&I2Cx->CR2) + 8UL;
+    DDL_ASSERT(IS_I2C_UNIT(I2Cx));
+    DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
+
+    if(Enable == enNewState)
+    {
+        *(__IO uint32_t *)u32CR4_Reg |= (1UL << 10UL);
+    }
+    else
+    {
+        *(__IO uint32_t *)u32CR4_Reg &= ~(1UL << 10UL);
     }
 }
 
@@ -731,11 +719,11 @@ void I2C_GeneralCallCmd(CM_I2C_TypeDef* I2Cx, en_functional_state_t enNewState)
  *         @arg I2C_FLAG_RX_FULL            : Receive buffer full flag
  *         @arg I2C_FLAG_TX_EMPTY           : Transfer buffer empty flag
  *         @arg I2C_FLAG_ARBITRATE_FAIL     : Arbitration fails flag
- *         @arg I2C_FLAG_ACK                : ACK detected flag
- *         @arg I2C_FLAG_NACK               : NACK detected flag
+ *         @arg I2C_FLAG_ACKR               : ACK status flag
+ *         @arg I2C_FLAG_NACKF              : NACK detected flag
  *         @arg I2C_FLAG_MASTER             : Master mode flag
  *         @arg I2C_FLAG_BUSY               : Bus busy status flag
- *         @arg I2C_FLAG_TX                 : Transfer mode flag
+ *         @arg I2C_FLAG_TRA                : Transfer mode flag
  *         @arg I2C_FLAG_GENERAL_CALL       : General call detected flag
  *         @arg I2C_FLAG_SMBUS_DEFAULT_MATCH: Smbus default address detected flag
  *         @arg I2C_FLAG_SMBUS_HOST_MATCH   : Smbus host address detected flag
@@ -765,7 +753,7 @@ en_flag_status_t I2C_GetStatus(const CM_I2C_TypeDef* I2Cx, uint32_t u32Flag)
  *         @arg I2C_FLAG_RX_FULL            : Receive buffer full flag clear
  *         @arg I2C_FLAG_TX_EMPTY           : Transfer buffer empty flag clear
  *         @arg I2C_FLAG_ARBITRATE_FAIL     : Arbitration fails flag clear
- *         @arg I2C_FLAG_NACK               : Nack detected flag clear
+ *         @arg I2C_FLAG_NACKF              : Nack detected flag clear
  *         @arg I2C_FLAG_GENERAL_CALL       : General call address detected flag clear
  *         @arg I2C_FLAG_SMBUS_DEFAULT_MATCH: Smbus default address detected flag clear
  *         @arg I2C_FLAG_SMBUS_HOST_MATCH   : Smbus host address detected flag clear
@@ -948,34 +936,134 @@ en_result_t I2C_Restart(CM_I2C_TypeDef* I2Cx, uint32_t u32Timeout)
  * @param  [in] I2Cx                Pointer to I2C instance register base.
  *                                  This parameter can be a value of the following:
  *         @arg CM_I2C:             I2C instance register base.
- * @param  [in] u8Addr              The address to be sent
+ * @param  [in] u16Addr             The address to be sent
+ * @param  [in] u8Dir               Transfer direction, This parameter can be
+ *                                  one of the following values:
+ *         @arg I2C_DIR_TX
+ *         @arg I2C_DIR_RX
  * @param  [in] u32Timeout          Maximum count of trying to get a status of a
  *                                  flag in status register
  * @retval en_result_t              Enumeration value:
  *         @arg Ok:                 Send successfully
  *         @arg ErrorTimeout:       Send address time out
+ *         @arg Error:              NACK received
  */
-en_result_t I2C_AddrTrans(CM_I2C_TypeDef* I2Cx, uint8_t u8Addr, uint32_t u32Timeout)
+en_result_t I2C_TransAddr(CM_I2C_TypeDef* I2Cx, uint16_t u16Addr, uint8_t u8Dir, uint32_t u32Timeout)
 {
     en_result_t enRet;
 
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
+    DDL_ASSERT(IS_I2C_TRANS_DIR(u8Dir));
+    DDL_ASSERT(IS_I2C_7BIT_ADDR(u16Addr));
 
     enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_EMPTY, Set, u32Timeout);
 
     if(Ok == enRet)
     {
         /* Send I2C address */
-        I2C_WriteData(I2Cx, u8Addr);
+        I2C_WriteData(I2Cx, (uint8_t)(u16Addr << 1U) | u8Dir);
 
-        if(0U == (u8Addr & 0x01U))
+        if(I2C_DIR_TX == u8Dir)
         {
             /* If in master transfer process, Need wait transfer end */
             enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_CPLT, Set, u32Timeout);
+        }
+        else
+        {
+            /* If in master recevie process, wait I2C_FLAG_TRA changed to recevie */
+            enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TRA, Reset, u32Timeout);
+        }
 
-            if(enRet == Ok)
+        if(enRet == Ok)
+        {
+            if(I2C_GetStatus(I2Cx, I2C_FLAG_ACKR) == Set)
             {
-                enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_ACK, Reset, u32Timeout);
+                enRet = Error;
+            }
+        }
+    }
+
+    return enRet;
+}
+
+/**
+ * @brief  I2Cx send 10 bit address
+ * @param  [in] I2Cx                Pointer to I2C instance register base.
+ *                                  This parameter can be a value of the following:
+ *         @arg CM_I2C:             I2C instance register base.
+ * @param  [in] u16Addr             The address to be sent
+ * @param  [in] u8Dir               Transfer direction, This parameter can be
+ *                                  one of the following values:
+ *         @arg I2C_DIR_TX
+ *         @arg I2C_DIR_RX
+ * @param  [in] u32Timeout          Maximum count of trying to get a status of a
+ *                                  flag in status register
+ * @retval en_result_t              Enumeration value:
+ *         @arg Ok:                 Send successfully
+ *         @arg ErrorTimeout:       Send address time out
+ *         @arg Error:              NACK received
+ */
+en_result_t I2C_Trans10BitAddr(CM_I2C_TypeDef* I2Cx, uint16_t u16Addr, uint8_t u8Dir, uint32_t u32Timeout)
+{
+    en_result_t enRet;
+
+    DDL_ASSERT(IS_I2C_UNIT(I2Cx));
+    DDL_ASSERT(IS_I2C_TRANS_DIR(u8Dir));
+    DDL_ASSERT(IS_I2C_10BIT_ADDR(u16Addr));
+
+    enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_EMPTY, Set, u32Timeout);
+
+    if(Ok == enRet)
+    {
+        /* Write 11110 + SLA(bit9:8) + W#(1bit) */
+        I2C_WriteData(I2Cx, (uint8_t)((u16Addr>>7U) & 0x06U) | 0xF0U | I2C_DIR_TX);
+        enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_CPLT, Set, u32Timeout);
+
+        if(Ok == enRet)
+        {
+            /* If receive ACK */
+            if(I2C_GetStatus(I2Cx, I2C_FLAG_ACKR) == Reset)
+            {
+                /* Write SLA(bit7:0)*/
+                I2C_WriteData(I2Cx, (uint8_t)(u16Addr & 0xFFU));
+                enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_CPLT, Set, u32Timeout);
+
+                if(Ok == enRet)
+                {
+                    if(I2C_GetStatus(I2Cx, I2C_FLAG_ACKR) != Reset)
+                    {
+                        enRet = Error;
+                    }
+                }
+            }
+            else
+            {
+                enRet = Error;
+            }
+        }
+    }
+
+    if((u8Dir == I2C_DIR_RX) && (Ok == enRet))
+    {
+        /* Restart */
+        I2C_ClearStatus(I2Cx, I2C_FLAG_START);
+        I2C_GenerateReStart(I2Cx);
+        enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_START, Set, u32Timeout);
+
+        if(Ok == enRet)
+        {
+            /* Write 11110 + SLA(bit9:8) + R(1bit) */
+            I2C_WriteData(I2Cx, (uint8_t)((u16Addr>>7U) & 0x06U) | 0xF0U | I2C_DIR_RX);
+            /* If in master receive process, Need wait TRA flag */
+            enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TRA, Reset, u32Timeout);
+
+            if(Ok == enRet)
+            {
+                /* If receive NACK */
+                if(I2C_GetStatus(I2Cx, I2C_FLAG_ACKR) != Reset)
+                {
+                    enRet = Error;
+                }
             }
         }
     }
@@ -997,12 +1085,12 @@ en_result_t I2C_AddrTrans(CM_I2C_TypeDef* I2Cx, uint8_t u8Addr, uint32_t u32Time
  *         @arg ErrorTimeout:       Send data time out
  *         @arg ErrorInvalidParameter: au8TxData is NULL
  */
-en_result_t I2C_DataTrans(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint32_t u32Size, uint32_t u32Timeout)
+en_result_t I2C_TransData(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint32_t u32Size, uint32_t u32Timeout)
 {
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
 
     en_result_t enRet = Ok;
-    uint32_t u32Cnt = 0UL;
+    __IO uint32_t u32Cnt = 0UL;
 
     if(au8TxData != NULL)
     {
@@ -1015,17 +1103,16 @@ en_result_t I2C_DataTrans(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint3
             {
                 /* Send one byte data */
                 I2C_WriteData(I2Cx, au8TxData[u32Cnt]);
-                u32Cnt++;
+
                 /* Wait transfer end*/
                 enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_TX_CPLT, Set, u32Timeout);
 
-                if(enRet == Ok)
+                /* If receive NACK*/
+                if(I2C_GetStatus(I2Cx, I2C_FLAG_ACKR) == Set)
                 {
-                    if(u32Cnt != u32Size)
-                    {
-                        enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_ACK, Reset, u32Timeout);
-                    }
+                    break;
                 }
+                u32Cnt++;
             }
         }
     }
@@ -1051,7 +1138,7 @@ en_result_t I2C_DataTrans(CM_I2C_TypeDef* I2Cx, uint8_t const au8TxData[], uint3
  *         @arg ErrorTimeout:       Receive data time out
  *         @arg ErrorInvalidParameter: au8RxData is NULL
  */
-en_result_t I2C_DataReceive(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout)
+en_result_t I2C_ReceiveData(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout)
 {
     en_result_t enRet = Ok;
 
@@ -1059,31 +1146,113 @@ en_result_t I2C_DataReceive(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t 
 
     if(au8RxData != NULL)
     {
-        uint32_t u32FastAckEn = READ_REG32_BIT(I2Cx->CR1, I2C_CR1_FACKEN);
+        uint32_t u32FastAckDis = READ_REG32_BIT(I2Cx->CR1, I2C_CR1_FACKEN);
+
         for(uint32_t i=0UL; i<u32Size; i++)
         {
-            if(((i == (u32Size - 1UL)) && (0UL == u32FastAckEn)))
-            {
-                I2C_AckConfig(I2Cx, I2C_NACK);
-            }
-
             enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_RX_FULL, Set, u32Timeout);
+
+            if(0UL == u32FastAckDis)
+            {
+                if((u32Size >= 2UL) && (i == (u32Size - 2UL)))
+                {
+                    I2C_AckConfig(I2Cx, I2C_NACK);
+                }
+            }
+            else
+            {
+                if(i != (u32Size - 1UL))
+                {
+                    I2C_AckConfig(I2Cx, I2C_ACK);
+                }
+                else
+                {
+                    I2C_AckConfig(I2Cx, I2C_NACK);
+                }
+            }
 
             if(enRet == Ok)
             {
                  /* read data from register */
                 au8RxData[i] = I2C_ReadData(I2Cx);
-                /* manually send ack and nack if FACKEN is set to 1(1:manually ack;0:fast ack) */
-                if(0UL != u32FastAckEn)
+            }
+            else
+            {
+                break;
+            }
+        }
+        I2C_AckConfig(I2Cx, I2C_ACK);
+    }
+    else
+    {
+        enRet = ErrorInvalidParameter;
+    }
+
+    return enRet;
+}
+
+/**
+ * @brief  I2Cx receive data and stop(for master)
+ * @param  [in] I2Cx                Pointer to I2C instance register base.
+ *                                  This parameter can be a value of the following:
+ *         @arg CM_I2C:             I2C instance register base.
+ * @param  [out] au8RxData          Array to hold the received data
+ * @param  [in] u32Size             Number of data to be received
+ * @param  [in] u32Timeout          Maximum count of trying to get a status of a
+ *                                  flag in status register
+ * @retval en_result_t              Enumeration value:
+ *         @arg Ok:                 Receive successfully
+ *         @arg ErrorTimeout:       Receive data time out
+ *         @arg ErrorInvalidParameter: au8RxData is NULL
+ */
+en_result_t I2C_MasterReceiveDataAndStop(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t u32Size, uint32_t u32Timeout)
+{
+    en_result_t enRet = Ok;
+
+    DDL_ASSERT(IS_I2C_UNIT(I2Cx));
+
+    if(au8RxData != NULL)
+    {
+        uint32_t u32FastAckDis = READ_REG32_BIT(I2Cx->CR1, I2C_CR1_FACKEN);
+
+        for(uint32_t i=0UL; i<u32Size; i++)
+        {
+            enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_RX_FULL, Set, u32Timeout);
+
+            if(0UL == u32FastAckDis)
+            {
+                if((u32Size >= 2UL) && (i == (u32Size - 2UL)))
                 {
-                    if(i != (u32Size - 1UL))
-                    {
-                        I2C_AckConfig(I2Cx, I2C_ACK);
-                    }
-                    else
-                    {
-                        I2C_AckConfig(I2Cx, I2C_NACK);
-                    }
+                    I2C_AckConfig(I2Cx, I2C_NACK);
+                }
+            }
+            else
+            {
+                if(i != (u32Size - 1UL))
+                {
+                    I2C_AckConfig(I2Cx, I2C_ACK);
+                }
+                else
+                {
+                    I2C_AckConfig(I2Cx, I2C_NACK);
+                }
+            }
+
+            if(enRet == Ok)
+            {
+                /* Stop before read last data */
+                if(i == (u32Size - 1UL))
+                {
+                    I2C_ClearStatus(I2Cx, I2C_FLAG_STOP);
+                    I2C_GenerateStop(I2Cx);
+                }
+                 /* read data from register */
+                au8RxData[i] = I2C_ReadData(I2Cx);
+
+                if(i == (u32Size - 1UL))
+                {
+                    /* Wait stop flag after DRR read */
+                    enRet = I2C_WaitStatus(I2Cx, I2C_FLAG_STOP, Set, u32Timeout);
                 }
             }
             else
@@ -1091,6 +1260,7 @@ en_result_t I2C_DataReceive(CM_I2C_TypeDef* I2Cx, uint8_t au8RxData[], uint32_t 
                 break;
             }
         }
+        I2C_AckConfig(I2Cx, I2C_ACK);
     }
     else
     {

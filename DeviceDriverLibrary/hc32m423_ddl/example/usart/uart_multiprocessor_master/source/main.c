@@ -87,7 +87,7 @@ typedef struct
 #define UART_SLAVE_STATION_ID           (0x21U)
 
 /* Ring buffer size */
-#define IS_RING_BUF_EMPYT(x)            (0U == ((x)->u16UsedSize))
+#define IS_RING_BUF_EMPTY(x)            (0U == ((x)->u16UsedSize))
 
 /* Multi-processor silence mode */
 #define MULTI_PROCESSOR_MD_NORMAL       (0U)
@@ -208,7 +208,7 @@ static void USART_TxEmpty_IrqCallback(void)
 
         USART_WriteData(USART_UNIT, (uint16_t)u8Data);
 
-        if (IS_RING_BUF_EMPYT(&m_stcRingBuf))
+        if (IS_RING_BUF_EMPTY(&m_stcRingBuf))
         {
             USART_FuncCmd(USART_UNIT, USART_INT_TX_EMPTY, Disable);
             USART_FuncCmd(USART_UNIT, USART_INT_TX_CPLT, Enable);
@@ -456,7 +456,7 @@ int32_t main(void)
 
         USART_FuncCmd(USART_UNIT, (USART_TX | USART_INT_TX_EMPTY), Enable);
 
-        while (IS_RING_BUF_EMPYT(&m_stcRingBuf))
+        while (IS_RING_BUF_EMPTY(&m_stcRingBuf))
         {
         }
 

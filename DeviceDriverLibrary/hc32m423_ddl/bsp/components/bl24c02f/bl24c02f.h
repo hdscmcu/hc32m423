@@ -1,7 +1,7 @@
 /**
  *******************************************************************************
  * @file  bl24c02f.h
- * @brief This file provides firmware functions to BL24C02F E2PROM.
+ * @brief This file provides firmware functions to BL24C02F EEPROM.
  @verbatim
    Change Logs:
    Date             Author          Notes
@@ -80,7 +80,7 @@ en_result_t BL24C02F_Init(void);
 en_result_t BL24C02F_ReadBuf(uint8_t u8ReadAddr, uint8_t au8ReadBuf[], uint32_t u32NumByte);
 en_result_t BL24C02F_WritePage(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], uint32_t u32NumByte);
 en_result_t BL24C02F_WriteBuf(uint8_t u8WriteAddr, const uint8_t au8WriteBuf[], uint32_t u32NumByte);
-en_result_t BL24C02F_WaitReady(void);
+en_result_t BL24C02F_I2C_WaitIdle(void);
 
 /**
  * @}

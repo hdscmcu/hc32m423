@@ -6,6 +6,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-12-03       CDT             Fixed SysTick_Delay function overflow handling
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -159,7 +160,7 @@ void DDL_DelayUS(uint32_t u32Count)
 
 /**
  * @brief This function Initializes the interrupt frequency of the SysTick.
- * @param [in] u32Freq                  SysTick interrupt frequency.
+ * @param [in] u32Freq                  SysTick interrupt frequency (1 to 1000).
  * @retval An en_result_t enumeration value:
  *           - Ok: SysTick Initializes succeed
  *           - Error: SysTick Initializes failed
@@ -168,7 +169,7 @@ __WEAKDEF en_result_t SysTick_Init(uint32_t u32Freq)
 {
     en_result_t enRet = Error;
 
-    if (0UL != u32Freq)
+    if ((0UL != u32Freq) && (u32Freq <= 1000UL))
     {
         m_u32TickStep = 1000UL / u32Freq;
         /* Configure the SysTick interrupt */
@@ -188,13 +189,18 @@ __WEAKDEF en_result_t SysTick_Init(uint32_t u32Freq)
  */
 __WEAKDEF void SysTick_Delay(uint32_t u32Delay)
 {
+    const uint32_t tickMax = 0xFFFFFFFFUL - (0xFFFFFFFFUL % m_u32TickStep);
     const uint32_t tickStart = SysTick_GetTick();
-    uint32_t tickEnd = u32Delay;
+    uint32_t tickEnd;
 
     /* Add a freq to guarantee minimum wait */
-    if (tickEnd < 0xFFFFFFFFUL)
+    if ((u32Delay >= tickMax) || ((tickMax - u32Delay) < m_u32TickStep))
     {
-        tickEnd += m_u32TickStep;
+        tickEnd = tickMax;
+    }
+    else
+    {
+        tickEnd = u32Delay + m_u32TickStep;
     }
 
     while ((SysTick_GetTick() - tickStart) < tickEnd)

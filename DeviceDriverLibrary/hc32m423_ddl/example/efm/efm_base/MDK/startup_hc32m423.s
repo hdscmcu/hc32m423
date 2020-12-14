@@ -181,17 +181,6 @@ Reset_Handler   PROC
                 IMPORT  SystemInit
                 IMPORT  __main
 
-;                LDR     R2, =0x40014020 ; PWC_FPRC
-;                LDR     R0, =0xA502
-;                STR     R0, [R2]        ; PWC_FPRC = 0xA502
-;
-;                MOVS    R0, #1
-;                LDR     R1, =0x42280190 ; PWC_RAMCR_RPERDIS
-;                STRB    R0, [R1]        ; PWC_RAMCR_RPERDIS = 1
-;
-;                LDR     R0, =0xA500
-;                STR     R0, [R2]        ; PWC_FPRC = 0xA500
-
                 LDR     R0, =SystemInit
                 BLX     R0
                 LDR     R0, =__main

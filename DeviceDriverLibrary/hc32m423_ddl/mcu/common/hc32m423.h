@@ -5,7 +5,7 @@
  @verbatim
    Change Logs:
    Date             Author          Notes
-   2020-09-15       CDT         First version
+   2020-11-19       CDT         First version
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -290,7 +290,7 @@ typedef enum
     EVT_I2C_RXI               = 420U,
     EVT_I2C_TXI               = 421U,
     EVT_I2C_TEI               = 422U,
-    EVT_I2C_EE1               = 423U,
+    EVT_I2C_EEI               = 423U,
 
     /* LVD */
     EVT_LVD1                  = 433U,
@@ -440,7 +440,7 @@ typedef enum
     INT_I2C_RXI               = 420U,
     INT_I2C_TXI               = 421U,
     INT_I2C_TEI               = 422U,
-    INT_I2C_EE1               = 423U,
+    INT_I2C_EEI               = 423U,
 
     /* USART1 wakeup */
     INT_USART1_WUPI           = 432U,
@@ -3112,10 +3112,10 @@ typedef struct
 #define I2C_CLR_NACKFCLR                               (0x00001000UL)
 #define I2C_CLR_GENCALLFCLR_POS                        (20U)
 #define I2C_CLR_GENCALLFCLR                            (0x00100000UL)
-#define I2C_CLR_SMBDEFAULTF_POS                        (21U)
-#define I2C_CLR_SMBDEFAULTF                            (0x00200000UL)
-#define I2C_CLR_SMBHOSTFCL_POS                         (22U)
-#define I2C_CLR_SMBHOSTFCL                             (0x00400000UL)
+#define I2C_CLR_SMBDEFAULTFCLR_POS                     (21U)
+#define I2C_CLR_SMBDEFAULTFCLR                         (0x00200000UL)
+#define I2C_CLR_SMBHOSTFCLR_POS                        (22U)
+#define I2C_CLR_SMBHOSTFCLR                            (0x00400000UL)
 #define I2C_CLR_SMBALRTFCLR_POS                        (23U)
 #define I2C_CLR_SMBALRTFCLR                            (0x00800000UL)
 
@@ -3135,8 +3135,6 @@ typedef struct
 #define I2C_CCR_CKDIV_0                                (0x00010000UL)
 #define I2C_CCR_CKDIV_1                                (0x00020000UL)
 #define I2C_CCR_CKDIV_2                                (0x00040000UL)
-#define I2C_CCR_FMPE_POS                               (23U)
-#define I2C_CCR_FMPE                                   (0x00800000UL)
 
 /*  Bit definition for I2C_FLTR register  */
 #define I2C_FLTR_DNF_POS                               (0U)
@@ -5814,8 +5812,8 @@ typedef struct
     __IO uint32_t NACKFCLR;
     uint32_t RESERVED3[7];
     __IO uint32_t GENCALLFCLR;
-    __IO uint32_t SMBDEFAULTF;
-    __IO uint32_t SMBHOSTFCL;
+    __IO uint32_t SMBDEFAULTFCLR;
+    __IO uint32_t SMBHOSTFCLR;
     __IO uint32_t SMBALRTFCLR;
     uint32_t RESERVED4[8];
 } stc_i2c_clr_bit_t;
@@ -5836,9 +5834,7 @@ typedef struct
     __IO uint32_t CKDIV0;
     __IO uint32_t CKDIV1;
     __IO uint32_t CKDIV2;
-    uint32_t RESERVED1[4];
-    __IO uint32_t FMPE;
-    uint32_t RESERVED2[8];
+    uint32_t RESERVED1[13];
 } stc_i2c_ccr_bit_t;
 
 typedef struct

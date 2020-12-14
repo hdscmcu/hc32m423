@@ -7,6 +7,7 @@
    Change Logs:
    Date             Author          Notes
    2020-09-15       CDT             First version
+   2020-10-30       CDT             Refine wait cycle setting API
  @endverbatim
  *******************************************************************************
  * Copyright (C) 2020, Huada Semiconductor Co., Ltd. All rights reserved.
@@ -262,10 +263,10 @@ en_result_t GPIO_Init(uint8_t u8Port, uint8_t u8Pin, const stc_gpio_init_t *pstc
 void GPIO_DeInit(void)
 {
     stc_gpio_init_t stcGpioInit;
-    (void)GPIO_StructInit(&stcGpioInit);
 
-    /* PORT register unprotect */
-    WRITE_REG16(CM_GPIO->PWPR, GPIO_REG_UNPROTECT);
+    DDL_ASSERT(IS_GPIO_UNLOCK());
+
+    (void)GPIO_StructInit(&stcGpioInit);
 
     /* PORT0 reset */
     (void)GPIO_Init(GPIO_PORT_0, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2), &stcGpioInit);
@@ -304,9 +305,6 @@ void GPIO_DeInit(void)
     WRITE_REG16(CM_GPIO->PSPCR, GPIO_PSPCR_RST_VALUE);
     WRITE_REG16(CM_GPIO->PCCR, GPIO_PCCR_RST_VALUE);
     WRITE_REG16(CM_GPIO->PINAER, GPIO_PINAER_RST_VALUE);
-
-    /* PORT registers protected */
-    WRITE_REG16(CM_GPIO->PWPR, GPIO_REG_PROTECT);
 }
 
 /**
@@ -448,7 +446,7 @@ void GPIO_SetReadWaitCycle(uint16_t u16ReadWait)
     DDL_ASSERT(IS_GPIO_RD_WAIT(u16ReadWait));
     DDL_ASSERT(IS_GPIO_UNLOCK());
 
-    MODIFY_REG16(CM_GPIO->PCCR, GPIO_PCCR_RDWT, u16ReadWait);
+    WRITE_REG16(CM_GPIO->PCCR, u16ReadWait);
 }
 
 /**
@@ -536,15 +534,15 @@ uint8_t GPIO_ReadInputPort(uint8_t u8Port)
  */
 en_pin_state_t GPIO_ReadOutputPins(uint8_t u8Port, uint8_t u8Pin)
 {
-    const __IO uint8_t *PODx;
+    const __IO uint8_t *PODRx;
 
     /* Parameter validity checking */
     DDL_ASSERT(IS_GPIO_PORT_SRC(u8Port));
     DDL_ASSERT(IS_GET_GPIO_PIN(u8Pin));
 
-    PODx = (__IO uint8_t *)((uint32_t)(&CM_GPIO->PODR0) + u8Port);
+    PODRx = (__IO uint8_t *)((uint32_t)(&CM_GPIO->PODR0) + u8Port);
 
-    return ((READ_REG8(*PODx) & (u8Pin)) != 0U) ? Pin_Set : Pin_Reset;
+    return ((READ_REG8(*PODRx) & (u8Pin)) != 0U) ? Pin_Set : Pin_Reset;
 }
 
 /**
